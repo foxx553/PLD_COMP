@@ -1,0 +1,11 @@
+.antlr/
+antlr/
+build/
+example/
+generated/
+DI.mk
+fedora.mk
+ubuntu.mk
+ifcc
+ifcc-test-output/
+a.out

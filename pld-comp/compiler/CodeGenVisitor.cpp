@@ -23,21 +23,12 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
 
 antlrcpp::Any CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 {
+    this->visitChildren(ctx);
 
-    if (ctx->value()->CONST())
-    {
-        int retval = stoi(ctx->value()->CONST()->getText());
-        std::cout << "\tmovl $" << retval << ", %eax\n";
-    } else if(ctx->value()->IDENTIFIER()){
-        std::string source = ctx->value()->IDENTIFIER()->getText();
-        if(symboles.count(source)){
-            std::cout << "\tmovl -" << symboles[source] << "(%rbp), %eax\n";
-        } else{
-            std::cout << "ERREUR : Variable non présente dans la table de symboles.\n";
-        }
-    }
-
-
+    int source = inter.top();
+    inter.pop();
+    
+    std::cout << "\tmovl -" << source << "(%rbp), %eax\n";
 
     return 0;
 }
@@ -71,25 +62,13 @@ antlrcpp::Any CodeGenVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *c
         std::cout << "Variable non existante dans la table de symboles. \n";
     }
    
-    if (ctx->value()->CONST())
-    {
-        int value = std::stoi(ctx->value()->CONST()->getText());
-        std::cout << "\tmovl $" << value << ", -" << symboles[dest] << "(%rbp)\n";
-    }
-    else if (ctx->value()->IDENTIFIER())
-    {
-        std::string source = ctx->value()->IDENTIFIER()->getText();
+    this->visitChildren(ctx);
 
-        if (symboles.count(source))
-        {
-            std::cout << "\tmovl -" << symboles[source] << "(%rbp), %eax\n";
-            std::cout << "\tmovl %eax, -" << symboles[dest] << "(%rbp)\n";
-        }
-        else
-        {
-            std::cerr << "ERREUR !!!\n";
-        }
-    }
+    int source = inter.top();
+    inter.pop();
+
+    std::cout << "\tmovl -" << source << "(%rbp), %eax\n";
+    std::cout << "\tmovl %eax, -" << symboles[dest] << "(%rbp)\n";
 
     return 0;
 }
@@ -115,14 +94,53 @@ antlrcpp::Any CodeGenVisitor::visitExprAddSub(ifccParser::ExprAddSubContext *ctx
     inter.push(stack);
 
     std::cout << "\tmovl -" << gauche << "(%rbp), %eax\n";
-    std::cout << "\taddl -" << droite << "(%rbp), %eax\n";
+
+    if(ctx->ADD()) {
+        std::cout << "\taddl -" << droite << "(%rbp), %eax\n";
+    }else{
+        std::cout << "\tsubl -" << droite << "(%rbp), %eax\n";
+    }
+
     std::cout << "\tmovl %eax, -" << stack << "(%rbp)\n";
 
-    return 
+    return 0;
 }
+
+antlrcpp::Any CodeGenVisitor::visitExprMultDiv(ifccParser::ExprMultDivContext *ctx) {
+    visitChildren(ctx);
+
+    int droite = inter.top();
+    inter.pop();
+    int gauche = inter.top();
+    inter.pop();
+
+    stack += 4;
+    inter.push(stack);
+
+    std::cout << "\tmovl -" << gauche << "(%rbp), %eax\n";
+
+    if(ctx->MULT()) {
+        std::cout << "\tmul -" << droite << "(%rbp)\n";
+    }else {
+        std::cout << "\tdiv -" << droite << "(%rbp)\n";
+    }
+
+    std::cout << "\tmovl %eax, -" << stack << "(%rbp)\n";
+
+    return 0;
+  }
 
 antlrcpp::Any CodeGenVisitor::visitExprVariable(ifccParser::ExprVariableContext *ctx)
 {
     std::string id = ctx->IDENTIFIER()->getText();
-    inter.push(symboles[id]);
+
+    if(symboles.count(id)) {
+        inter.push(symboles[id]);
+    }
+    else
+    {
+        std::cerr << "ERREUR !!!!\n";
+    }
+
+    return 0;
 }

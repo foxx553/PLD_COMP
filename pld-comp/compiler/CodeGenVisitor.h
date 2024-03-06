@@ -15,6 +15,7 @@ public:
     virtual antlrcpp::Any visitExprConstante(ifccParser::ExprConstanteContext *ctx) override;
     virtual antlrcpp::Any visitExprAddSub(ifccParser::ExprAddSubContext *ctx) override;
     virtual antlrcpp::Any visitExprVariable(ifccParser::ExprVariableContext *ctx) override;
+    virtual antlrcpp::Any visitExprMultDiv(ifccParser::ExprMultDivContext *ctx) override ;
 
 private:
     std::map<std::string, int> symboles;

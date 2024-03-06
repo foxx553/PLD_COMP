@@ -7,9 +7,9 @@ prog : 'int' 'main' '(' ')' '{' instruction '}' ;
 instruction : (return_stmt | declare_stmt | assign_stmt)+ ;
 
 expression: '(' expression ')'                  #exprPar
-          | ('-' | '+') expression              #exprUnaire
-          | expression ('*'|'/') expression     #exprMultDiv
-          | expression ('+'|'-') expression     #exprAddSub
+          | (SUB| ADD) expression              #exprUnaire
+          | expression (MULT| DIV) expression     #exprMultDiv
+          | expression (ADD|SUB) expression     #exprAddSub
           | IDENTIFIER                          #exprVariable
           | CONST                               #exprConstante
           ;
@@ -20,6 +20,10 @@ assign_stmt : IDENTIFIER '=' expression ';';
 
 value : CONST | IDENTIFIER;
 
+ADD : '+';
+SUB: '-';
+MULT : '*';
+DIV : '/';
 RETURN : 'return' ;
 CONST : [0-9]+ ;
 COMMENT : '/*' .*? '*/' -> skip ;

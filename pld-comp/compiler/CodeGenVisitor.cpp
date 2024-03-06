@@ -104,8 +104,21 @@ antlrcpp::Any CodeGenVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *c
 
 antlrcpp::Any CodeGenVisitor::visitExprAddSub(ifccParser::ExprAddSubContext *ctx)   
 {
- 
-    return visitChildren(ctx);
+    visitChildren(ctx);
+
+    int droite = inter.top();
+    inter.pop();
+    int gauche = inter.top();
+    inter.pop();
+
+    stack += 4;
+    inter.push(stack);
+
+    std::cout << "\tmovl -" << gauche << "(%rbp), %eax\n";
+    std::cout << "\taddl -" << droite << "(%rbp), %eax\n";
+    std::cout << "\tmovl %eax, -" << stack << "(%rbp)\n";
+
+    return 
 }
 
 antlrcpp::Any CodeGenVisitor::visitExprVariable(ifccParser::ExprVariableContext *ctx)

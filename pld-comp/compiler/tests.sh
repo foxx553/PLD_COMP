@@ -1,0 +1,1 @@
+../tests/ifcc-test.py ../tests/testfiles

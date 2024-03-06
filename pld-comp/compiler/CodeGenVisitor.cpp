@@ -23,16 +23,29 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
 
 antlrcpp::Any CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 {
-    int retval = stoi(ctx->CONST()->getText());
 
-    std::cout << "\tmovl $" << retval << ", %eax\n";
+    if (ctx->value()->CONST())
+    {
+        int retval = stoi(ctx->value()->CONST()->getText());
+        std::cout << "\tmovl $" << retval << ", %eax\n";
+    } else if(ctx->value()->IDENTIFIER()){
+        std::string source = ctx->value()->IDENTIFIER()->getText();
+        if(symboles.count(source)){
+            std::cout << "\tmovl -" << symboles[source] << "(%rbp), %eax\n";
+        } else{
+            std::cout << "ERREUR : Variable non présente dans la table de symboles.\n";
+        }
+    }
+
+
 
     return 0;
 }
 
-antlrcpp::Any CodeGenVisitor::visitAffect_stmt(ifccParser::Affect_stmtContext *ctx)
+antlrcpp::Any CodeGenVisitor::visitDeclare_stmt(ifccParser::Declare_stmtContext *ctx)
 {
-    std::string dest = ctx->IDENTIFIER()[0]->getText();
+    antlr4::tree::TerminalNode* identifier = ctx->assign_stmt() ? ctx->assign_stmt()->IDENTIFIER(): ctx->IDENTIFIER();
+    std::string dest = identifier->getText();
 
     if (!symboles.count(dest))
     {
@@ -41,14 +54,31 @@ antlrcpp::Any CodeGenVisitor::visitAffect_stmt(ifccParser::Affect_stmtContext *c
         symboles[dest] = stack;
     }
 
-    if (ctx->CONST())
+    if(ctx->assign_stmt())
     {
-        int value = std::stoi(ctx->CONST()->getText());
+        this->visit(ctx->assign_stmt());
+    }
+
+    return 0;
+}
+
+antlrcpp::Any CodeGenVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) {
+
+   std::string dest = ctx->IDENTIFIER()->getText();
+
+    if (!symboles.count(dest))
+    {
+        std::cout << "Variable non existante dans la table de symboles. \n";
+    }
+   
+    if (ctx->value()->CONST())
+    {
+        int value = std::stoi(ctx->value()->CONST()->getText());
         std::cout << "\tmovl $" << value << ", -" << symboles[dest] << "(%rbp)\n";
     }
-    else if (ctx->IDENTIFIER()[1])
+    else if (ctx->value()->IDENTIFIER())
     {
-        std::string source = ctx->IDENTIFIER()[1]->getText();
+        std::string source = ctx->value()->IDENTIFIER()->getText();
 
         if (symboles.count(source))
         {
@@ -64,8 +94,22 @@ antlrcpp::Any CodeGenVisitor::visitAffect_stmt(ifccParser::Affect_stmtContext *c
     return 0;
 }
 
-antlrcpp::Any CodeGenVisitor::visitInstruction(ifccParser::InstructionContext *ctx)
+ antlrcpp::Any CodeGenVisitor::visitExprConstante(ifccParser::ExprConstanteContext *ctx) {
+    int value = std::stoi(ctx->CONST()->getText());
+    stack += 4;
+    inter.push(stack);
+    std::cout << "\tmovl $" << value << ", -" << stack << "(%rbp)\n";
+    return visitChildren(ctx);
+  }
+
+antlrcpp::Any CodeGenVisitor::visitExprAddSub(ifccParser::ExprAddSubContext *ctx)   
 {
-    this->visitChildren(ctx);
-    return 0;
+ 
+    return visitChildren(ctx);
+}
+
+antlrcpp::Any CodeGenVisitor::visitExprVariable(ifccParser::ExprVariableContext *ctx)
+{
+    std::string id = ctx->IDENTIFIER()->getText();
+    inter.push(symboles[id]);
 }

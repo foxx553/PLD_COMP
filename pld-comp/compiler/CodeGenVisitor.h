@@ -17,9 +17,12 @@ public:
     virtual antlrcpp::Any visitExprVariable(ifccParser::ExprVariableContext *ctx) override;
     virtual antlrcpp::Any visitExprMultDiv(ifccParser::ExprMultDivContext *ctx) override ;
     virtual antlrcpp::Any visitExprUnaire(ifccParser::ExprUnaireContext *ctx) override ;
+    virtual antlrcpp::Any visitCall_stmt(ifccParser::Call_stmtContext *ctx) override ;
+    virtual antlrcpp::Any visitFunction_call(ifccParser::Function_callContext *ctx) override ;
 
 private:
     std::map<std::string, int> symboles;
     int stack = 0;
     std::stack<int> inter;
+    std::vector<std::string> param_reg = {"%edi", "%esi", "%edx", "%ecx", "%e8", "%e9"};
 };

@@ -4,21 +4,23 @@ axiom : prog EOF ;
 
 prog : 'int' 'main' '(' ')' '{' instruction '}' ;
 
-instruction : (return_stmt | declare_stmt | assign_stmt)+ ;
+instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt)+ ;
+
+function_call : IDENTIFIER (('(' ')') | ('(' expression (',' expression)* ')')) ;
 
 expression: '(' expression ')'                  #exprPar
-          | (SUB| ADD) expression              #exprUnaire
-          | expression (MULT| DIV) expression     #exprMultDiv
+          | (SUB|ADD) expression                #exprUnaire
+          | expression (MULT|DIV) expression    #exprMultDiv
           | expression (ADD|SUB) expression     #exprAddSub
           | IDENTIFIER                          #exprVariable
           | CONST                               #exprConstante
+          | function_call                       #exprFunction
           ;
 
 return_stmt : RETURN expression ';';
 declare_stmt : 'int' (IDENTIFIER ';' | assign_stmt);
 assign_stmt : IDENTIFIER '=' expression ';';
-
-value : CONST | IDENTIFIER;
+call_stmt : function_call ';';
 
 ADD : '+';
 SUB: '-';

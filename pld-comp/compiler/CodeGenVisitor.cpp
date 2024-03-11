@@ -165,3 +165,36 @@ antlrcpp::Any CodeGenVisitor::visitExprUnaire(ifccParser::ExprUnaireContext *ctx
 
     return 0;
   }
+
+  antlrcpp::Any CodeGenVisitor::visitCall_stmt(ifccParser::Call_stmtContext *ctx) {
+
+    this->visitChildren(ctx);
+    return 0;
+
+  }
+
+
+  antlrcpp::Any CodeGenVisitor::visitFunction_call(ifccParser::Function_callContext *ctx) {
+    
+    this->visitChildren(ctx);
+
+    std::string function_name = ctx->IDENTIFIER()->getText();
+
+    for (int i = 0; i < ctx->expression().size(); i++) {
+        
+        int term = inter.top();
+        inter.pop();
+
+        std::cout << "\tmovl -" << term << "(%rbp), " << this->param_reg[i] << "\n";
+
+    }
+
+    std::cout << "\tcall " << function_name << "@PLT\n";
+
+    // fonction "void" qui retourne 0 par exemple
+    std::cout << "\tmovl $0, %eax\n";
+    std::cout << "\tleave\n";
+
+    return 0;
+
+  }

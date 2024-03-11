@@ -122,9 +122,9 @@ antlrcpp::Any CodeGenVisitor::visitExprMultDiv(ifccParser::ExprMultDivContext *c
     if(ctx->MULT()) {
         std::cout << "\tmul -" << droite << "(%rbp)\n";
     }else {
-        std::cout << "\tdiv -" << droite << "(%rbp)\n";
+        std::cout << "\tmovl -" << droite << "(%rbp), %ecx\n";
+        std::cout << "\tcltd\n\tidivl %ecx\n";
     }
-
     std::cout << "\tmovl %eax, -" << stack << "(%rbp)\n";
 
     return 0;
@@ -144,3 +144,24 @@ antlrcpp::Any CodeGenVisitor::visitExprVariable(ifccParser::ExprVariableContext 
 
     return 0;
 }
+
+antlrcpp::Any CodeGenVisitor::visitExprUnaire(ifccParser::ExprUnaireContext *ctx) {
+    visitChildren(ctx);
+
+    int term = inter.top();
+    inter.pop();
+
+    stack += 4;
+    inter.push(stack);
+
+    if(ctx->SUB()) {
+        std::cout << "\tmovl $-1, %eax\n";
+    }else {
+        std::cout << "\tmovl $1, %eax\n";
+    }
+    
+    std::cout << "\tmul -" << term << "(%rbp)\n";
+    std::cout << "\tmovl %eax, -" << stack << "(%rbp)\n";
+
+    return 0;
+  }

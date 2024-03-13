@@ -14,3 +14,4 @@ config.mk
 compiler/*.c
 compiler/*.o
 compiler/*.s
+.vscode/

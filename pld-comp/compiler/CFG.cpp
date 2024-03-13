@@ -1,6 +1,6 @@
 #include "CFG.hpp"
 
-CFG::CFG(DefFonction* ast)
+CFG::CFG()
 {
     
 }

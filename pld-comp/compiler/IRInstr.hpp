@@ -10,7 +10,6 @@
 
 class BasicBlock;
 class CFG;
-class DefFonction;
 
 enum class Type 
 {

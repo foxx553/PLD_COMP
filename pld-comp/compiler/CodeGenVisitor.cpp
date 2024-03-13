@@ -191,7 +191,7 @@ antlrcpp::Any CodeGenVisitor::visitExprUnaire(ifccParser::ExprUnaireContext *ctx
 
     std::cout << "\tcall " << function_name << "@PLT\n";
 
-    // fonction "void" qui retourne 0 par exemple
+    // test pour le putchar
     std::cout << "\tmovl $0, %eax\n";
     std::cout << "\tleave\n";
 

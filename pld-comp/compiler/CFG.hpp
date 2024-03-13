@@ -40,6 +40,7 @@ class CFG {
 	std::map<std::string, int> SymbolIndex; /**< part of the symbol table  */
 	int nextFreeSymbolIndex; /**< to allocate new symbols in the symbol table */
 	int nextBBnumber; /**< just for naming */
+	int nextTempIndex;
 	
 	std::vector<BasicBlock*> bbs; /**< all the basic blocks of this CFG*/
 };

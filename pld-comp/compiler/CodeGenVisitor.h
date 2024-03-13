@@ -2,6 +2,7 @@
 
 #include "antlr4-runtime.h"
 #include "generated/ifccBaseVisitor.h"
+#include "CFG.hpp"
 
 #include <map>
 
@@ -23,6 +24,7 @@ public:
 private:
     std::map<std::string, int> symboles;
     int stack = 0;
+    std::vector<CFG> cfgs;
     std::stack<int> inter;
     std::vector<std::string> param_reg = {"%edi", "%esi", "%edx", "%ecx", "%e8", "%e9"};
 };

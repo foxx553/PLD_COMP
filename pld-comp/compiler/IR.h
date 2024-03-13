@@ -120,7 +120,11 @@ class CFG {
 	DefFonction* ast; /**< The AST this CFG comes from */
 	
 	void add_bb(BasicBlock* bb); 
+<<<<<<< HEAD
 è
+=======
+
+>>>>>>> 4d0fdf09205902facf69377b2dccd63a5d1884dd
 	// x86 code generation: could be encapsulated in a processor class in a retargetable compiler
 	void gen_asm(ostream& o);
 	string IR_reg_to_asm(string reg); /**< helper method: inputs a IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */

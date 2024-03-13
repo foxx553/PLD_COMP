@@ -11,3 +11,6 @@ ifcc-test-output/
 a.out
 ret42.c
 config.mk
+compiler/*.c
+compiler/*.o
+compiler/*.s

@@ -7,6 +7,8 @@ prog : 'int' 'main' '(' ')' '{' instruction '}' ;
 instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt)+ ;
 
 function_call : IDENTIFIER (('(' ')') | ('(' expression (',' expression)* ')')) ;
+assignation : IDENTIFIER '=' expression ;
+declaration : IDENTIFIER | assignation ;
 
 expression: '(' expression ')'                  #exprPar
           | (SUB|ADD) expression                #exprUnaire
@@ -18,8 +20,8 @@ expression: '(' expression ')'                  #exprPar
           ;
 
 return_stmt : RETURN expression ';';
-declare_stmt : 'int' (IDENTIFIER ';' | assign_stmt);
-assign_stmt : IDENTIFIER '=' expression ';';
+declare_stmt : 'int' declaration (',' declaration)* ';' ;
+assign_stmt : assignation ';';
 call_stmt : function_call ';';
 
 ADD : '+';

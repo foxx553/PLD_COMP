@@ -17,7 +17,8 @@ IRInstr::IRInstr(Operation op, Type t, std::vector<std::string> params)
 
 void IRInstr::gen_asm(std::ostream &o)
 {
-    switch (op) {
+    switch (op) 
+    {
     case Operation::ldconst:
         gen_ldconst(o);
         break;
@@ -35,6 +36,9 @@ void IRInstr::gen_asm(std::ostream &o)
         break;
     case Operation::div:
         gen_div(o);
+        break;
+    case Operation::ret:
+        gen_ret(o);
         break;
     case Operation::rmem:
         //pas encore à faire
@@ -54,7 +58,6 @@ void IRInstr::gen_asm(std::ostream &o)
     case Operation::cmp_le:
         //pas encore faite
         break;
-
     }
 }
 
@@ -98,4 +101,9 @@ void IRInstr::gen_div(std::ostream &o)
     o << "\tmovl -" << params[2] << "(%rbp), %ecx\n";
     o << "\tcltd\n\tidivl %ecx\n";
     o << "\tmovl %eax, -" << params[0] << "(%rbp)\n";
+}
+
+void IRInstr::gen_ret(std::ostream &o)
+{
+    o << "\tmovl -" << params[0] << ", %eax" << std::endl;
 }

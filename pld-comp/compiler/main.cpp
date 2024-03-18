@@ -50,8 +50,13 @@ int main(int argn, const char **argv)
   // std::ostream &o = std::cout;
   // instr.gen_asm(o);
 
+  std::string name(argv[1]);
+  name[name.size() - 1] = 's';
+  std::ofstream output(name);
+
   CodeGenVisitor v;
-  v.visit(tree);
+  v.visit(tree); // on génère l'IR
+  v.gen_asm(output); // on génère le code ASM pour l'IR
 
   return 0;
 }

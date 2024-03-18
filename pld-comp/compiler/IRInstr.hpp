@@ -52,6 +52,7 @@ class IRInstr {
 	void gen_sub(std::ostream &o);
 	void gen_mul(std::ostream &o);
 	void gen_div(std::ostream &o);
+	void gen_ret(std::ostream &o);
 
  private:
 	BasicBlock* bb; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */

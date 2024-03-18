@@ -14,7 +14,7 @@
  */
 class CFG {
  public:
-	CFG(int index);
+	CFG(const std::string& name);
 	virtual ~CFG();
 
 	void add_bb(BasicBlock* bb); 

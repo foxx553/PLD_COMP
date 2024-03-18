@@ -31,7 +31,7 @@ MUL : '*';
 DIV : '/';
 RETURN : 'return' ;
 CONST : [0-9]+ ;
-COMMENT : '/*' .*? '*/' -> skip ;
+COMMENT : ('/*' .*? '*/' | '//' .*? '\n' ) -> skip ;
 DIRECTIVE : '#' .*? '\n' -> skip ;
 WS    : [ \t\r\n] -> channel(HIDDEN);
 IDENTIFIER : [a-zA-Z][a-zA-Z0-9]* ;

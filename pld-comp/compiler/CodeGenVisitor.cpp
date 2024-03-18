@@ -1,5 +1,16 @@
 #include "CodeGenVisitor.h"
 
+void CodeGenVisitor::gen_asm(std::ostream& o)
+{
+    o << ".text" << std::endl;
+    o << ".globl main" << std::endl;
+
+    for(auto graph: graphs)
+    {
+        graph->gen_asm(o);
+    }
+}
+
 CodeGenVisitor::~CodeGenVisitor()
 {
     for(auto graph: graphs)
@@ -17,7 +28,9 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
 
 antlrcpp::Any CodeGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) 
 {
-    graphs.push_back(new CFG(graphs.size()));
+    auto name = ctx->IDENTIFIER()[0]->getText();
+
+    graphs.push_back(new CFG(name));
     this->visit(ctx->instruction());
 
     return 0;

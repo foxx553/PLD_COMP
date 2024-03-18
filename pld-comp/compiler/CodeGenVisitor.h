@@ -10,6 +10,8 @@ class CodeGenVisitor : public ifccBaseVisitor
 {
 public:
     virtual ~CodeGenVisitor();
+
+    void gen_asm(std::ostream& o);
     
     virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
     virtual antlrcpp::Any visitFunction(ifccParser::FunctionContext *ctx) override;

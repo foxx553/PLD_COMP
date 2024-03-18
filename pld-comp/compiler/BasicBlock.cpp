@@ -3,7 +3,6 @@
 
 BasicBlock::BasicBlock(CFG* cfg, std::string entry_label) : exit_true(nullptr), exit_false(nullptr), label(entry_label), cfg(cfg)
 {
-
 }
 
 BasicBlock::~BasicBlock()
@@ -14,9 +13,9 @@ BasicBlock::~BasicBlock()
     }
 }
 
-void BasicBlock::gen_asm(std::ostream &o)
+void BasicBlock::gen_asm(std::ostream& o)
 {
-    for (int i = 0; i < instrs.size(); i++) 
+    for(int i = 0; i < instrs.size(); i++)
     {
         instrs[i]->gen_asm(o);
     }

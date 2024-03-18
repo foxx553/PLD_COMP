@@ -165,7 +165,7 @@ antlrcpp::Any CodeGenVisitor::visitExprVariable(ifccParser::ExprVariableContext*
     auto dest_idx = graph->get_var_index(dest_name);
     auto source = graph->get_var_index(ctx->IDENTIFIER()->getText());
 
-    block->add_IRInstr(IRInstr::Operation::ldconst, Type::INT_64, {std::to_string(dest_idx), std::to_string(source)});
+    block->add_IRInstr(IRInstr::Operation::copy, Type::INT_64, {std::to_string(dest_idx), std::to_string(source)});
 
     expressions.push(dest_name);
 
@@ -187,7 +187,7 @@ antlrcpp::Any CodeGenVisitor::visitExprUnaire(ifccParser::ExprUnaireContext* ctx
 
     auto dest_name = graph->create_new_tempvar(Type::INT_64);
     auto dest_idx = graph->get_var_index(dest_name);
-    block->add_IRInstr(IRInstr::Operation::mul, Type::INT_64, {std::to_string(dest_idx), std::to_string(source)});
+    block->add_IRInstr(IRInstr::Operation::mul, Type::INT_64, {std::to_string(dest_idx), std::to_string(source), std::to_string(facteur)});
 
     expressions.push(dest_name);
 

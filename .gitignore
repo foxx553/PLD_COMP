@@ -16,3 +16,4 @@ compiler/*.o
 compiler/*.s
 .vscode/
 demo/
+ret42.s

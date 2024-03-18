@@ -105,5 +105,5 @@ void IRInstr::gen_div(std::ostream& o)
 
 void IRInstr::gen_ret(std::ostream& o)
 {
-    o << "\tmovl -" << params[0] << ", %eax" << std::endl;
+    o << "\tmovl -" << params[0] << "(%rbp), %eax" << std::endl;
 }

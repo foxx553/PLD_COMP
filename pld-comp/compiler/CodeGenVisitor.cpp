@@ -1,70 +1,54 @@
 #include "CodeGenVisitor.h"
 
+CodeGenVisitor::~CodeGenVisitor()
+{
+    for(auto graph: graphs)
+    {
+        delete graph;
+    }
+}
+
 antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
 {
-    std::cout << ".globl main\n";
-    std::cout << "\tmain: \n";
+    this->visitChildren(ctx);
 
-    std::cout << "\n\t# prologue\n";
-    std::cout << "\tpushq %rbp \n";
-    std::cout << "\tmovq %rsp, %rbp \n";
+    return 0;
+}
 
-    std::cout << "\n\t# body\n";
-
+antlrcpp::Any CodeGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) 
+{
+    graphs.push_back(new CFG(graphs.size()));
     this->visit(ctx->instruction());
-
-    std::cout << "\n\t# epilogue\n";
-    std::cout << "\tpopq %rbp\n";
-
-    std::cout << "\tret\n";
-
-    bool allVariablesUsed = true;
-    for (auto it = symbolesUse.begin(); it != symbolesUse.end(); it++) {
-        if (it -> second == false) {
-            allVariablesUsed = false;
-            break;
-        }
-    }
-
-    if (!allVariablesUsed) {
-        std::cout << "WARNING: Some declared variables were never initialized" << std::endl;
-    }
 
     return 0;
 }
 
 antlrcpp::Any CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 {
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
     this->visitChildren(ctx);
 
-    int source = inter.top();
-    inter.pop();
-    
-    std::cout << "\tmovl -" << source << "(%rbp), %eax\n";
+    auto dest_idx = graph->get_var_index(expressions.top());
+    expressions.pop();
+
+    block->add_IRInstr(IRInstr::Operation::ret, Type::INT_64, { std::to_string(dest_idx) });
 
     return 0;
 }
 
 antlrcpp::Any CodeGenVisitor::visitDeclare_stmt(ifccParser::Declare_stmtContext *ctx)
-{
-    
+{   
     this->visitChildren(ctx);
     return 0;
-
 }
 
-antlrcpp::Any CodeGenVisitor::visitDeclaration(ifccParser::DeclarationContext *ctx) {
-    
+antlrcpp::Any CodeGenVisitor::visitDeclaration(ifccParser::DeclarationContext *ctx) 
+{
     antlr4::tree::TerminalNode* identifier = ctx->assignation() ? ctx->assignation()->IDENTIFIER(): ctx->IDENTIFIER();
-    std::string dest = identifier->getText();
 
-    if (!symboles.count(dest))
-    {
-        stack += 4;
-        int index = stack;
-        symboles[dest] = stack;
-        symbolesUse[dest] = false;
-    }
+    graphs.back()->add_to_symbol_table(identifier->getText(), Type::INT_64);
 
     if(ctx->assignation())
     {
@@ -72,146 +56,143 @@ antlrcpp::Any CodeGenVisitor::visitDeclaration(ifccParser::DeclarationContext *c
     }
 
     return 0;
-
 }
 
-antlrcpp::Any CodeGenVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) {
-
+antlrcpp::Any CodeGenVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) 
+{
     this->visitChildren(ctx);
     return 0;
-
 }
 
-antlrcpp::Any CodeGenVisitor::visitAssignation(ifccParser::AssignationContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitAssignation(ifccParser::AssignationContext *ctx) 
+{
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
 
-    std::string dest = ctx->IDENTIFIER()->getText();
-
-    if (!symboles.count(dest))
-    {
-        std::cout << "Variable non existante dans la table de symboles. \n";
-    }
-    else {
-        symbolesUse[dest] = true;
-    }
-   
     this->visitChildren(ctx);
 
-    int source = inter.top();
-    inter.pop();
+    auto dest = graph->get_var_index(ctx->IDENTIFIER()->getText());
+    auto source = graph->get_var_index(expressions.top());
+    expressions.pop();
 
-    std::cout << "\tmovl -" << source << "(%rbp), %eax\n";
-    std::cout << "\tmovl %eax, -" << symboles[dest] << "(%rbp)\n";
+    std::vector<std::string> params{ std::to_string(dest), std::to_string(source) };
+    block->add_IRInstr(IRInstr::Operation::copy, Type::INT_64, params);
 
     return 0;
-
 }
 
- antlrcpp::Any CodeGenVisitor::visitExprConstante(ifccParser::ExprConstanteContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitExprConstante(ifccParser::ExprConstanteContext *ctx) 
+{
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    auto dest_name = graph->create_new_tempvar(Type::INT_64);
+    auto dest_idx = graph->get_var_index(dest_name);
     int value = std::stoi(ctx->CONST()->getText());
-    stack += 4;
-    inter.push(stack);
-    std::cout << "\tmovl $" << value << ", -" << stack << "(%rbp)\n";
-    return visitChildren(ctx);
-  }
+
+    block->add_IRInstr(IRInstr::Operation::ldconst, Type::INT_64, { std::to_string(dest_idx), std::to_string(value) });
+
+    expressions.push(dest_name);
+
+    return 0;
+}
 
 antlrcpp::Any CodeGenVisitor::visitExprAddSub(ifccParser::ExprAddSubContext *ctx)   
 {
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
     visitChildren(ctx);
 
-    int droite = inter.top();
-    inter.pop();
-    int gauche = inter.top();
-    inter.pop();
+    auto droite = graph->get_var_index(expressions.top());
+    expressions.pop();
+    auto gauche = graph->get_var_index(expressions.top());
+    expressions.pop();
 
-    stack += 4;
-    inter.push(stack);
+    auto dest_name = graph->create_new_tempvar(Type::INT_64);
+    auto dest_idx = graph->get_var_index(dest_name);
 
-    std::cout << "\tmovl -" << gauche << "(%rbp), %eax\n";
+    std::vector<std::string> params{ std::to_string(dest_idx), std::to_string(gauche), std::to_string(droite) };
+    block->add_IRInstr(ctx->ADD() ? IRInstr::Operation::add : IRInstr::Operation::sub, Type::INT_64, params);
 
-    if(ctx->ADD()) {
-        std::cout << "\taddl -" << droite << "(%rbp), %eax\n";
-    }else{
-        std::cout << "\tsubl -" << droite << "(%rbp), %eax\n";
-    }
-
-    std::cout << "\tmovl %eax, -" << stack << "(%rbp)\n";
+    expressions.push(dest_name);
 
     return 0;
 }
 
-antlrcpp::Any CodeGenVisitor::visitExprMultDiv(ifccParser::ExprMultDivContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitExprMultDiv(ifccParser::ExprMultDivContext *ctx) 
+{
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
     visitChildren(ctx);
 
-    int droite = inter.top();
-    inter.pop();
-    int gauche = inter.top();
-    inter.pop();
+    auto droite = graph->get_var_index(expressions.top());
+    expressions.pop();
+    auto gauche = graph->get_var_index(expressions.top());
+    expressions.pop();
 
-    stack += 4;
-    inter.push(stack);
+    auto dest_name = graph->create_new_tempvar(Type::INT_64);
+    auto dest_idx = graph->get_var_index(dest_name);
 
-    std::cout << "\tmovl -" << gauche << "(%rbp), %eax\n";
+    std::vector<std::string> params{ std::to_string(dest_idx), std::to_string(gauche), std::to_string(droite) };
+    block->add_IRInstr(ctx->MUL() ? IRInstr::Operation::mul : IRInstr::Operation::div, Type::INT_64, params);
 
-    if(ctx->MULT()) {
-        std::cout << "\tmul -" << droite << "(%rbp)\n";
-    }else {
-        std::cout << "\tmovl -" << droite << "(%rbp), %ecx\n";
-        std::cout << "\tcltd\n\tidivl %ecx\n";
-    }
-    std::cout << "\tmovl %eax, -" << stack << "(%rbp)\n";
+    expressions.push(dest_name);
 
     return 0;
   }
 
 antlrcpp::Any CodeGenVisitor::visitExprVariable(ifccParser::ExprVariableContext *ctx)
 {
-    std::string id = ctx->IDENTIFIER()->getText();
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
 
-    if(symboles.count(id)) {
-        inter.push(symboles[id]);
-    }
-    else
-    {
-        std::cerr << "ERREUR !!!!\n";
-    }
+    auto dest_name = graph->create_new_tempvar(Type::INT_64);
+    auto dest_idx = graph->get_var_index(dest_name);
+    auto source = graph->get_var_index(ctx->IDENTIFIER()->getText());
+
+    block->add_IRInstr(IRInstr::Operation::ldconst, Type::INT_64, { std::to_string(dest_idx), std::to_string(source) });
+
+    expressions.push(dest_name);
 
     return 0;
 }
 
-antlrcpp::Any CodeGenVisitor::visitExprUnaire(ifccParser::ExprUnaireContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitExprUnaire(ifccParser::ExprUnaireContext *ctx) 
+{
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
     visitChildren(ctx);
 
-    int term = inter.top();
-    inter.pop();
+    auto facteur = graph->get_var_index(graph->create_new_tempvar(Type::INT_64));
+    block->add_IRInstr(IRInstr::Operation::ldconst, Type::INT_64, { std::to_string(facteur), std::to_string(ctx->ADD() ? 1 : -1) });
 
-    stack += 4;
-    inter.push(stack);
+    auto source = graph->get_var_index(expressions.top());
+    expressions.pop();
 
-    if(ctx->SUB()) {
-        std::cout << "\tmovl $-1, %eax\n";
-    }else {
-        std::cout << "\tmovl $1, %eax\n";
-    }
-    
-    std::cout << "\tmul -" << term << "(%rbp)\n";
-    std::cout << "\tmovl %eax, -" << stack << "(%rbp)\n";
+    auto dest_name = graph->create_new_tempvar(Type::INT_64);
+    auto dest_idx = graph->get_var_index(dest_name);
+    block->add_IRInstr(IRInstr::Operation::mul, Type::INT_64, { std::to_string(dest_idx), std::to_string(source) });
+
+    expressions.push(dest_name);
 
     return 0;
-  }
+}
 
-  antlrcpp::Any CodeGenVisitor::visitCall_stmt(ifccParser::Call_stmtContext *ctx) {
-
+antlrcpp::Any CodeGenVisitor::visitCall_stmt(ifccParser::Call_stmtContext *ctx) 
+{
     /* WORK IN PROGRESS
     this->visitChildren(ctx);
     */
 
     return 0;
 
-  }
+}
 
-
-  antlrcpp::Any CodeGenVisitor::visitFunction_call(ifccParser::Function_callContext *ctx) {
-    
+antlrcpp::Any CodeGenVisitor::visitFunction_call(ifccParser::Function_callContext *ctx) 
+{  
     /* WORK IN PROGRESS
     this->visitChildren(ctx);
 
@@ -233,4 +214,4 @@ antlrcpp::Any CodeGenVisitor::visitExprUnaire(ifccParser::ExprUnaireContext *ctx
 
     return 0;
 
-  }
+}

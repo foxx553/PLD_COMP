@@ -36,12 +36,13 @@ class IRInstr {
 		call,       // fct()
 		cmp_eq,     // a == b
 		cmp_lt,     // a < b
-		cmp_le      // a <= b
+		cmp_le,     // a <= b
+		ret 		// return a
 	};
 
 	/**  constructor */
 	IRInstr(BasicBlock* bb_, Operation op, Type t, std::vector<std::string> params);
-	IRInstr(Operation op, Type t, std::vector<std::string> params) ;
+	IRInstr(Operation op, Type t, std::vector<std::string> params);
 
 	/** Actual code generation */
 	void gen_asm(std::ostream &o); /**< x86 assembly code generation for this IR instruction */

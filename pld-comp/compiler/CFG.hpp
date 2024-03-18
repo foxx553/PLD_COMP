@@ -14,7 +14,8 @@
  */
 class CFG {
  public:
-	CFG();
+	CFG(int index);
+	virtual ~CFG();
 
 	void add_bb(BasicBlock* bb); 
 	// x86 code generation: could be encapsulated in a processor class in a retargetable compiler
@@ -32,6 +33,8 @@ class CFG {
 	// basic block management
 	std::string new_BB_name();
 	BasicBlock* current_bb;
+	BasicBlock* begin_bb;
+	BasicBlock* end_bb;
 
  protected:
 	std::map<std::string, Type> SymbolType; /**< part of the symbol table  */
@@ -41,5 +44,6 @@ class CFG {
 	int nextTempIndex;
 	
 	std::vector<BasicBlock*> bbs; /**< all the basic blocks of this CFG*/
+	std::string name;
 };
 

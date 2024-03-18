@@ -2,7 +2,8 @@ grammar ifcc;
 
 axiom : prog EOF ;
 
-prog : 'int' 'main' '(' ')' '{' instruction '}' ;
+prog : function* ;
+function : 'int' IDENTIFIER '(' ('int' IDENTIFIER (',' 'int' IDENTIFIER)* )? ')' '{' instruction '}';
 
 instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt)+ ;
 
@@ -12,7 +13,7 @@ declaration : IDENTIFIER | assignation ;
 
 expression: '(' expression ')'                  #exprPar
           | (SUB|ADD) expression                #exprUnaire
-          | expression (MULT|DIV) expression    #exprMultDiv
+          | expression (MUL|DIV) expression     #exprMultDiv
           | expression (ADD|SUB) expression     #exprAddSub
           | IDENTIFIER                          #exprVariable
           | CONST                               #exprConstante
@@ -26,7 +27,7 @@ call_stmt : function_call ';';
 
 ADD : '+';
 SUB: '-';
-MULT : '*';
+MUL : '*';
 DIV : '/';
 RETURN : 'return' ;
 CONST : [0-9]+ ;

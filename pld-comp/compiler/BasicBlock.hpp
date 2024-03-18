@@ -31,9 +31,12 @@ Possible optimization:
 class BasicBlock {
  public:
 	BasicBlock(CFG* cfg, std::string entry_label);
+	virtual ~BasicBlock();
+
 	void gen_asm(std::ostream &o); /**< x86 assembly code generation for this basic block (very simple) */
 
 	void add_IRInstr(IRInstr::Operation op, Type t, std::vector<std::string> params);
+	void next(BasicBlock* block);
 
 	// No encapsulation whatsoever here. Feel free to do better.
 	BasicBlock* exit_true;  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */ 

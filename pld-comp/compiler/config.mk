@@ -5,6 +5,6 @@
 # ANTLR=antlr4
 
 ANTLRJAR=/usr/share/java/stringtemplate4.jar:/usr/share/java/antlr4.jar:/usr/share/java/antlr4-runtime.jar:/usr/share/java/antlr3-runtime.jar/:/usr/share/java/treelayout.jar
-ANTLRINC=/home/oelfatihi/Bureau/PLD_COMP/pld-comp/antlr/include
-ANTLRLIB=/home/oelfatihi/Bureau/PLD_COMP/pld-comp/antlr/lib/libantlr4-runtime.a
+ANTLRINC=../antlr/include
+ANTLRLIB=../antlr/lib/libantlr4-runtime.a
 ANTLR=antlr4

@@ -19,13 +19,13 @@ int main(int argn, const char **argv)
   stringstream in;
   if (argn==2)
   {
-     ifstream lecture(argv[1]);
-     in << lecture.rdbuf();
+    ifstream lecture(argv[1]);
+    in << lecture.rdbuf();
   }
   else
   {
-      cerr << "usage: ifcc path/to/file.c" << endl ;
-      exit(1);
+    cerr << "usage: ifcc path/to/file.c" << endl ;
+    exit(1);
   }
   
   ANTLRInputStream input(in.str());
@@ -40,17 +40,15 @@ int main(int argn, const char **argv)
 
   if(parser.getNumberOfSyntaxErrors() != 0)
   {
-      cerr << "error: syntax error during parsing" << endl;
-      exit(1);
+    cerr << "error: syntax error during parsing" << endl;
+    exit(1);
   }
 
-
-  //TEST IRINSTR
-  //std::vector<std::string> params{"4","5","3"};
-  //IRInstr instr= IRInstr(IRInstr::Operation::mul, Type::INT_64,params);
-  //std::ostream &o = std::cout;
-  //instr.gen_asm(o);
-
+  // TEST IRINSTR
+  // std::vector<std::string> params{"4","5","3"};
+  // IRInstr instr= IRInstr(IRInstr::Operation::mul, Type::INT_64,params);
+  // std::ostream &o = std::cout;
+  // instr.gen_asm(o);
 
   CodeGenVisitor v;
   v.visit(tree);

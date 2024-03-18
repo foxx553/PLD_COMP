@@ -18,6 +18,18 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
 
     std::cout << "\tret\n";
 
+    bool allVariablesUsed = true;
+    for (auto it = symbolesUse.begin(); it != symbolesUse.end(); it++) {
+        if (it -> second == false) {
+            allVariablesUsed = false;
+            break;
+        }
+    }
+
+    if (!allVariablesUsed) {
+        std::cout << "WARNING: Some declared variables were never initialized" << std::endl;
+    }
+
     return 0;
 }
 
@@ -35,7 +47,15 @@ antlrcpp::Any CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *c
 
 antlrcpp::Any CodeGenVisitor::visitDeclare_stmt(ifccParser::Declare_stmtContext *ctx)
 {
-    antlr4::tree::TerminalNode* identifier = ctx->assign_stmt() ? ctx->assign_stmt()->IDENTIFIER(): ctx->IDENTIFIER();
+    
+    this->visitChildren(ctx);
+    return 0;
+
+}
+
+antlrcpp::Any CodeGenVisitor::visitDeclaration(ifccParser::DeclarationContext *ctx) {
+    
+    antlr4::tree::TerminalNode* identifier = ctx->assignation() ? ctx->assignation()->IDENTIFIER(): ctx->IDENTIFIER();
     std::string dest = identifier->getText();
 
     if (!symboles.count(dest))
@@ -43,23 +63,35 @@ antlrcpp::Any CodeGenVisitor::visitDeclare_stmt(ifccParser::Declare_stmtContext 
         stack += 4;
         int index = stack;
         symboles[dest] = stack;
+        symbolesUse[dest] = false;
     }
 
-    if(ctx->assign_stmt())
+    if(ctx->assignation())
     {
-        this->visit(ctx->assign_stmt());
+        this->visit(ctx->assignation());
     }
 
     return 0;
+
 }
 
 antlrcpp::Any CodeGenVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) {
 
-   std::string dest = ctx->IDENTIFIER()->getText();
+    this->visitChildren(ctx);
+    return 0;
+
+}
+
+antlrcpp::Any CodeGenVisitor::visitAssignation(ifccParser::AssignationContext *ctx) {
+
+    std::string dest = ctx->IDENTIFIER()->getText();
 
     if (!symboles.count(dest))
     {
         std::cout << "Variable non existante dans la table de symboles. \n";
+    }
+    else {
+        symbolesUse[dest] = true;
     }
    
     this->visitChildren(ctx);
@@ -71,6 +103,7 @@ antlrcpp::Any CodeGenVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *c
     std::cout << "\tmovl %eax, -" << symboles[dest] << "(%rbp)\n";
 
     return 0;
+
 }
 
  antlrcpp::Any CodeGenVisitor::visitExprConstante(ifccParser::ExprConstanteContext *ctx) {
@@ -168,7 +201,10 @@ antlrcpp::Any CodeGenVisitor::visitExprUnaire(ifccParser::ExprUnaireContext *ctx
 
   antlrcpp::Any CodeGenVisitor::visitCall_stmt(ifccParser::Call_stmtContext *ctx) {
 
+    /* WORK IN PROGRESS
     this->visitChildren(ctx);
+    */
+
     return 0;
 
   }
@@ -176,6 +212,7 @@ antlrcpp::Any CodeGenVisitor::visitExprUnaire(ifccParser::ExprUnaireContext *ctx
 
   antlrcpp::Any CodeGenVisitor::visitFunction_call(ifccParser::Function_callContext *ctx) {
     
+    /* WORK IN PROGRESS
     this->visitChildren(ctx);
 
     std::string function_name = ctx->IDENTIFIER()->getText();
@@ -190,10 +227,9 @@ antlrcpp::Any CodeGenVisitor::visitExprUnaire(ifccParser::ExprUnaireContext *ctx
     }
 
     std::cout << "\tcall " << function_name << "@PLT\n";
-
-    // test pour le putchar
     std::cout << "\tmovl $0, %eax\n";
     std::cout << "\tleave\n";
+    */
 
     return 0;
 

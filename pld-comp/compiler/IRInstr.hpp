@@ -41,10 +41,17 @@ class IRInstr {
 
 	/**  constructor */
 	IRInstr(BasicBlock* bb_, Operation op, Type t, std::vector<std::string> params);
-	
+	IRInstr(Operation op, Type t, std::vector<std::string> params) ;
+
 	/** Actual code generation */
 	void gen_asm(std::ostream &o); /**< x86 assembly code generation for this IR instruction */
-	
+	void gen_ldconst(std::ostream &o);
+	void gen_copy(std::ostream &o);
+	void gen_add(std::ostream &o);
+	void gen_sub(std::ostream &o);
+	void gen_mul(std::ostream &o);
+	void gen_div(std::ostream &o);
+
  private:
 	BasicBlock* bb; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */
 	Operation op;

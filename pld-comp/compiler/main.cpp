@@ -7,6 +7,7 @@
 #include "generated/ifccLexer.h"
 #include "generated/ifccParser.h"
 #include "generated/ifccBaseVisitor.h"
+#include "IRInstr.hpp"
 
 #include "CodeGenVisitor.h"
 
@@ -43,7 +44,14 @@ int main(int argn, const char **argv)
       exit(1);
   }
 
-  
+
+  //TEST IRINSTR
+  //std::vector<std::string> params{"4","5","3"};
+  //IRInstr instr= IRInstr(IRInstr::Operation::mul, Type::INT_64,params);
+  //std::ostream &o = std::cout;
+  //instr.gen_asm(o);
+
+
   CodeGenVisitor v;
   v.visit(tree);
 

@@ -10,7 +10,7 @@
 #include "generated/ifccParser.h"
 
 #include "Visitor.hpp"
-#include "Backend.hpp"
+#include "BackendASM.hpp"
 
 using namespace antlr4;
 using namespace std;
@@ -52,28 +52,17 @@ int main(int argn, const char** argv)
         exit(1);
     }
 
-    // TEST IRINSTR
-    // std::vector<std::string> params{"4","5","3"};
-    // IRInstr instr= IRInstr(Operation::mul, Type::INT_64,params);
-    // std::ostream &o = std::cout;
-    // instr.gen_asm(o);
-
-    // Output to file
-    /* 
-    std::string name(argv[1]);
-    name[name.size() - 1] = 's';
-    std::ofstream output(name); 
-    */
-
+    // on génère l'IR
     Visitor v;
-    v.visit(tree);     // on génère l'IR
+    v.visit(tree);     
     
-    IR graphs = v.get_graphs(); // on récupère l'IR
+    // on récupère l'IR
+    IR graphs = v.get_graphs(); 
 
-    BackendASM backend(graphs);
-
+    // on génère le backend
     std::ofstream file(output);
-    backend.generate(output.empty() ? std::cout : file);
+    BackendASM backend(graphs, output.empty() ? std::cout : file);
+    backend.generate();
 
     return 0;
 }

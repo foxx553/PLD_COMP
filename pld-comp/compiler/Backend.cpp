@@ -1,6 +1,6 @@
 #include "Backend.hpp"
 
-Backend::Backend(IR& ir): ir(ir) 
+Backend::Backend(IR& ir, std::ostream& o): ir(ir), o(o) 
 {
 
 }
@@ -10,91 +10,91 @@ Backend::~Backend()
 
 }
 
-void Backend::generate(std::ostream& o)
+void Backend::generate()
 {
-    begin(o);
+    begin();
 
     for(auto cfg: ir)
     {
-        graph(o, cfg);
+        graph(cfg);
     }
 }
 
-void Backend::graph(std::ostream& o, CFG* cfg)
+void Backend::graph(CFG* cfg)
 {
-    graph_begin(o, cfg);
+    graph_begin(cfg);
 
     for(const auto& bb: cfg->get_blocks())
     {
-        block(o, bb);
+        block(bb);
 
         if(!bb->exit_true) // pas de suite
         {
-            graph_end(o, cfg);
+            graph_end(cfg);
         }
         else if(!bb->exit_false) // suite simple
         {
-            block_jump_simple(o, bb);
+            block_jump_simple(bb);
         }
         else // suite conditionnelle
         {
-            block_jump_conditional(o, bb);
+            block_jump_conditional(bb);
         }
     }
 }
 
-void Backend::block(std::ostream& o, BasicBlock* bb)
+void Backend::block(BasicBlock* bb)
 {
-    block_begin(o, bb);
+    block_begin(bb);
 
     for(const auto& instr: bb->instrs)
     {
-        instruction(o, instr);
+        instruction(instr);
     }
 }
 
-void Backend::instruction(std::ostream& o, IRInstr* instr)
+void Backend::instruction(IRInstr* instr)
 {
     switch(instr->get_operation())
     {
     case Operation::ldconst:
-        instruction_ldconst(o, instr);
+        instruction_ldconst(instr);
         break;
     case Operation::copy:
-        instruction_copy(o, instr);
+        instruction_copy(instr);
         break;
     case Operation::add:
-        instruction_add(o, instr);
+        instruction_add(instr);
         break;
     case Operation::sub:
-        instruction_sub(o, instr);
+        instruction_sub(instr);
         break;
     case Operation::mul:
-        instruction_mul(o, instr);
+        instruction_mul(instr);
         break;
     case Operation::div:
-        instruction_div(o, instr);
+        instruction_div(instr);
         break;
     case Operation::ret:
-        instruction_ret(o, instr);
+        instruction_ret(instr);
         break;
     case Operation::rmem:
-        instruction_rmem(o, instr);
+        instruction_rmem(instr);
         break;
     case Operation::wmem:
-        instruction_wmem(o, instr);
+        instruction_wmem(instr);
         break;
     case Operation::call:
-        instruction_call(o, instr);
+        instruction_call(instr);
         break;
     case Operation::cmp_eq:
-        instruction_cmp_eq(o, instr);
+        instruction_cmp_eq(instr);
         break;
     case Operation::cmp_lt:
-        instruction_cmp_lt(o, instr);
+        instruction_cmp_lt(instr);
         break;
     case Operation::cmp_le:
-        instruction_cmp_le(o, instr);
+        instruction_cmp_le(instr);
         break;
     }
 }

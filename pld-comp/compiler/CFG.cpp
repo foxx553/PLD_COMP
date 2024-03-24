@@ -9,56 +9,60 @@ CFG::CFG(const std::string& name) : name(name), nextFreeSymbolIndex(0), nextBBnu
 
     current_bb = begin_bb;
 
-    bbs.push_back(begin_bb);
-    bbs.push_back(end_bb);
+    blocks.push_back(begin_bb);
+    blocks.push_back(end_bb);
 }
 
 CFG::~CFG()
 {
-    for(auto bb: bbs)
+    for(auto bb: blocks)
     {
         delete bb;
     }
 }
 
-void CFG::add_bb(BasicBlock* bb)
+const std::string& CFG::get_name() const
 {
-    this->bbs.push_back(bb);
+    return name;
 }
 
-void CFG::gen_asm(std::ostream& o)
+const std::vector<BasicBlock*>& CFG::get_blocks() const
 {
-    o << name << ':' << std::endl;
+    return blocks;
+}
 
-    gen_asm_prologue(o);
-
-    for(int i = 0; i < bbs.size(); i++)
+const int CFG::get_index(const std::string& name) const
+{
+    if(SymbolType.count(name) == 0 && SymbolIndex.count(name) == 0)
     {
-        o << "." << bbs[i]->label << ":" << std::endl;
-        bbs[i]->gen_asm(o);
 
-        if(bbs[i]->exit_false && bbs[i]->exit_true)
-        {
-            // si 2 flèches de sortie : Test à faire pour décider du saut
-            // Récupérer la variable du test: 2 solutions: derniere tmp: celle qui contient le résultat de la comparaison (marche pas tjrs)
-            // test_var_name; puis récupérer avec map<std::string, int> SymbolIndex;
-
-            int indexTest = SymbolIndex[bbs[i]->test_var_name];
-            o << "\tcmpl -"
-              << "$0, -" << indexTest << "(%rbp)" << std::endl;
-            o << "\tje ." << bbs[i]->exit_true->label << std::endl;
-            o << "\tjmp ." << bbs[i]->exit_false->label << std::endl;
-        }
-        else if(!(bbs[i]->exit_false) && bbs[i]->exit_true)
-        {
-            // si exit_false est nul, une seule sortie
-            o << "\tjmp ." << bbs[i]->exit_true->label << std::endl;
-        }
-        else if(!(bbs[i]->exit_true))
-        {
-            gen_asm_epilogue(o);
-        }
+        std::cerr << "Error symbol does not present" << std::endl;
+        return -1;
     }
+    else
+    {
+        return SymbolIndex.at(name);
+    }
+}
+
+const Type CFG::get_type(const std::string& name) const
+{
+    if(SymbolType.count(name) == 0 && SymbolIndex.count(name) == 0)
+    {
+        std::cout << "Error symbol does not present" << std::endl;
+        // to do : throw an exception
+    }
+    else
+    {
+        return SymbolType.at(name);
+    }
+
+    return Type::INT_64;
+}
+
+void CFG::add_bb(BasicBlock* bb)
+{
+    this->blocks.push_back(bb);
 }
 
 std::string CFG::IR_reg_to_asm(std::string reg)
@@ -67,20 +71,6 @@ std::string CFG::IR_reg_to_asm(std::string reg)
     /**< helper method: inputs a IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
     std::string formatted = "-" + reg + "(%rbp)";
     return formatted;
-}
-
-void CFG::gen_asm_prologue(std::ostream& o)
-{
-    o << "\t# prologue\n";
-    o << "\tpushq %rbp \n";
-    o << "\tmovq %rsp, %rbp \n";
-}
-
-void CFG::gen_asm_epilogue(std::ostream& o)
-{
-    o << "\t# epilogue\n";
-    o << "\tpopq %rbp\n";
-    o << "\tret\n";
 }
 
 void CFG::add_to_symbol_table(std::string name, Type t)

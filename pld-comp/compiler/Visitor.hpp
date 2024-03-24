@@ -6,18 +6,15 @@
 #include "CFG.hpp"
 #include <map>
 
-class CodeGenVisitor : public ifccBaseVisitor
+class Visitor : public ifccBaseVisitor
 {
 public:
-    virtual ~CodeGenVisitor();
+    virtual ~Visitor();
 
-    void gen_asm(std::ostream& o);
+    IR get_graphs();
 
-    virtual antlrcpp::Any visitProg(ifccParser::ProgContext* ctx) override;
     virtual antlrcpp::Any visitFunction(ifccParser::FunctionContext* ctx) override;
     virtual antlrcpp::Any visitReturn_stmt(ifccParser::Return_stmtContext* ctx) override;
-    virtual antlrcpp::Any visitDeclare_stmt(ifccParser::Declare_stmtContext* ctx) override;
-    virtual antlrcpp::Any visitAssign_stmt(ifccParser::Assign_stmtContext* ctx) override;
     virtual antlrcpp::Any visitAssignation(ifccParser::AssignationContext* ctx) override;
     virtual antlrcpp::Any visitExprConstante(ifccParser::ExprConstanteContext* ctx) override;
     virtual antlrcpp::Any visitExprAddSub(ifccParser::ExprAddSubContext* ctx) override;
@@ -29,9 +26,7 @@ public:
     virtual antlrcpp::Any visitDeclaration(ifccParser::DeclarationContext* ctx) override;
 
 private:
-    std::map<std::string, int>  symboles;
-    std::map<std::string, bool> symbolesUse;
     int                         stack = 0;
     std::stack<std::string>     expressions;
-    std::vector<CFG*>           graphs;
+    IR                          graphs;
 };

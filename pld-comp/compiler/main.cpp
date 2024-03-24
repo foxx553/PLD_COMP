@@ -9,18 +9,26 @@
 #include "generated/ifccLexer.h"
 #include "generated/ifccParser.h"
 
-#include "CodeGenVisitor.h"
+#include "Visitor.hpp"
+#include "Backend.hpp"
 
 using namespace antlr4;
 using namespace std;
 
 int main(int argn, const char** argv)
 {
+    std::string output;
+
     stringstream in;
-    if(argn == 2)
+    if(argn >= 2)
     {
         ifstream lecture(argv[1]);
         in << lecture.rdbuf();
+
+        if(argn == 3)
+        {
+            output = argv[2]; 
+        }
     }
     else
     {
@@ -46,7 +54,7 @@ int main(int argn, const char** argv)
 
     // TEST IRINSTR
     // std::vector<std::string> params{"4","5","3"};
-    // IRInstr instr= IRInstr(IRInstr::Operation::mul, Type::INT_64,params);
+    // IRInstr instr= IRInstr(Operation::mul, Type::INT_64,params);
     // std::ostream &o = std::cout;
     // instr.gen_asm(o);
 
@@ -57,9 +65,15 @@ int main(int argn, const char** argv)
     std::ofstream output(name); 
     */
 
-    CodeGenVisitor v;
+    Visitor v;
     v.visit(tree);     // on génère l'IR
-    v.gen_asm(std::cout); // on génère le code ASM pour l'IR
+    
+    IR graphs = v.get_graphs(); // on récupère l'IR
+
+    BackendASM backend(graphs);
+
+    std::ofstream file(output);
+    backend.generate(output.empty() ? std::cout : file);
 
     return 0;
 }

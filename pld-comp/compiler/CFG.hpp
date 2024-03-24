@@ -3,6 +3,8 @@
 #include "BasicBlock.hpp"
 #include "IRInstr.hpp"
 
+typedef std::vector<CFG*> IR;
+
 /** The class for the control flow graph, also includes the symbol table */
 
 /* A few important comments:
@@ -18,12 +20,13 @@ public:
     CFG(const std::string& name);
     virtual ~CFG();
 
+    const std::string& get_name() const;
+    const std::vector<BasicBlock*>& get_blocks() const;
+    const Type get_type(const std::string& name) const;
+    const int get_index(const std::string& name) const;
+
     void add_bb(BasicBlock* bb);
-    // x86 code generation: could be encapsulated in a processor class in a retargetable compiler
-    void        gen_asm(std::ostream& o);
     std::string IR_reg_to_asm(std::string reg); /**< helper method: inputs a IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
-    void        gen_asm_prologue(std::ostream& o);
-    void        gen_asm_epilogue(std::ostream& o);
 
     // symbol table methods
     void        add_to_symbol_table(std::string name, Type t);
@@ -44,6 +47,6 @@ protected:
     int                         nextBBnumber;        /**< just for naming */
     int                         nextTempIndex;
 
-    std::vector<BasicBlock*> bbs; /**< all the basic blocks of this CFG*/
+    std::vector<BasicBlock*> blocks; /**< all the basic blocks of this CFG*/
     std::string              name;
 };

@@ -20,8 +20,10 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/IRInstr.o \
 	build/BasicBlock.o \
 	build/CFG.o \
-	build/main.o \
-	build/CodeGenVisitor.o
+	build/Backend.o \
+	build/BackendASM.o \
+	build/Visitor.o \
+	build/main.o 
 
 ifcc: $(OBJECTS)
 	@mkdir -p build

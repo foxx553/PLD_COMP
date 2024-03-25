@@ -3,21 +3,28 @@ grammar ifcc;
 axiom : prog EOF ;
 
 prog : function* ;
-function : 'int' IDENTIFIER '(' ('int' IDENTIFIER (',' 'int' IDENTIFIER)* )? ')' '{' instruction '}';
+function : 'int' IDENTIFIER '(' ('int' IDENTIFIER (',' 'int' IDENTIFIER)* )? ')' block;
 
-instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt)+ ;
+instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt | loop | condition)+ ;
 
-function_call : IDENTIFIER (('(' ')') | ('(' expression (',' expression)* ')')) ;
+block : '{' instruction '}';
+function_call : IDENTIFIER '(' (expression (',' expression)* )? ')' ;
 assignation : IDENTIFIER '=' expression ;
 declaration : IDENTIFIER | assignation ;
+loop : 'while' '(' expression ')' block;
+condition : 'if' '(' expression ')' block ('else if' '(' expression ')' block)* ('else' block)?;
 
-expression: '(' expression ')'                  #exprPar
-          | (SUB|ADD) expression                #exprUnaire
-          | expression (MUL|DIV) expression     #exprMultDiv
-          | expression (ADD|SUB) expression     #exprAddSub
-          | IDENTIFIER                          #exprVariable
-          | CONST                               #exprConstante
-          | function_call                       #exprFunction
+expression: '(' expression ')'                          #exprPar
+          | expression OR expression                    #exprOr
+          | expression AND expression                   #exprAnd
+          | NOT expression                              #exprNot
+          | expression (EQ|NE|LT|GT|LE|GE) expression   #exprCmp
+          | (SUB|ADD) expression                        #exprUnaire
+          | expression (MUL|DIV) expression             #exprMultDiv
+          | expression (ADD|SUB) expression             #exprAddSub
+          | IDENTIFIER                                  #exprVariable
+          | CONST                                       #exprConstante
+          | function_call                               #exprFunction
           ;
 
 return_stmt : RETURN expression ';' ;
@@ -29,6 +36,15 @@ ADD : '+';
 SUB: '-';
 MUL : '*';
 DIV : '/';
+OR : '||';
+AND : '&&';
+NOT : '!';
+EQ : '==';
+NE : '!=';
+LT : '<';
+GT : '>';
+LE : '<=';
+GE : '>=';
 RETURN : 'return' ;
 CONST : [0-9]+ ;
 COMMENT : ('/*' .*? '*/' | '//' .*? '\n' ) -> skip ;

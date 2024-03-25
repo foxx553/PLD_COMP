@@ -256,7 +256,6 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
 
         last_condition_bb->exit_false = else_bb;
         else_bb->exit_true = out_bb;
-        else_bb->exit_false = out_bb;
     }
 
     // Setting current bb to the out bb

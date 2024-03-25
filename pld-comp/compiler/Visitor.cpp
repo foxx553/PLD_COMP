@@ -201,7 +201,7 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
     BasicBlock* last_condition_bb = nullptr;
 
     // Following blocks
-    for(int i = 0; i < ctx->expression().size() - 1; i++) 
+    for(int i = 0; i < ctx->expression().size(); i++) 
     {
         // 'if' condition
         auto expression = ctx->expression()[i];

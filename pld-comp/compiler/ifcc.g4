@@ -3,14 +3,16 @@ grammar ifcc;
 axiom : prog EOF ;
 
 prog : function* ;
-function : 'int' IDENTIFIER '(' ('int' IDENTIFIER (',' 'int' IDENTIFIER)* )? ')' '{' instruction '}';
+function : 'int' IDENTIFIER '(' ('int' IDENTIFIER (',' 'int' IDENTIFIER)* )? ')' block;
 
-instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt)+ ;
+instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt | loop | condition)+ ;
 
-function_call : IDENTIFIER (('(' ')') | ('(' expression (',' expression)* ')')) ;
+block : '{' instruction '}';
+function_call : IDENTIFIER '(' (expression (',' expression)* )? ')' ;
 assignation : IDENTIFIER '=' expression ;
 declaration : IDENTIFIER | assignation ;
-loop : 'while' '(' expression ')' '{' instruction '}';
+loop : 'while' '(' expression ')' block;
+condition : 'if' '(' expression ')' block ('else if' '(' expression ')' block)* ('else' block)?;
 
 expression: '(' expression ')'                          #exprPar
           | expression OR expression                    #exprOr

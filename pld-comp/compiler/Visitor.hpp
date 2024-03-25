@@ -24,6 +24,8 @@ public:
     virtual antlrcpp::Any visitCall_stmt(ifccParser::Call_stmtContext* ctx) override;
     virtual antlrcpp::Any visitFunction_call(ifccParser::Function_callContext* ctx) override;
     virtual antlrcpp::Any visitDeclaration(ifccParser::DeclarationContext* ctx) override;
+    virtual antlrcpp::Any visitLoop(ifccParser::LoopContext *ctx) override;
+    virtual antlrcpp::Any visitCondition(ifccParser::ConditionContext *ctx) override;
 
 private:
     int                         stack = 0;

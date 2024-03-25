@@ -3,8 +3,8 @@
 
 CFG::CFG(const std::string& name) : name(name), nextFreeSymbolIndex(0), nextBBnumber(0), nextTempIndex(0)
 {
-    begin_bb = new BasicBlock(this, name + new_BB_name());
-    end_bb = new BasicBlock(this, name + new_BB_name());
+    begin_bb = new BasicBlock(this, new_BB_name());
+    end_bb = new BasicBlock(this, new_BB_name());
 
     current_bb = begin_bb;
 
@@ -130,5 +130,5 @@ Type CFG::get_var_type(std::string name)
 
 std::string CFG::new_BB_name()
 {
-    return "BB" + std::to_string(nextBBnumber++);
+    return name + "_BB_" + std::to_string(nextBBnumber++);
 }

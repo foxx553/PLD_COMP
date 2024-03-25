@@ -224,7 +224,6 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
         if(i == 0)
         {
             block->exit_true = condition_bb;
-            block->exit_false = condition_bb;
         }
 
         // 'if' block

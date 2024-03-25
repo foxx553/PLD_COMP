@@ -196,69 +196,68 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
 
     // Creating bb after all the conditions
     auto out_bb = new BasicBlock(graph, graph->new_BB_name());
+    graph->add_bb(out_bb);
 
-    // First 'if' condition
-    auto expression = ctx->expression()[0];
-    this->visit(expression);
-    auto condition_bb = new BasicBlock(graph, graph->new_BB_name());
-    condition_bb->test_var_name = expressions.top();
-    expressions.pop();
-
-    // Branching with the previous bb
-    block->exit_true = condition_bb;
-    block->exit_false = condition_bb;
-
-    // First 'if' block
-    auto instructions_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(instructions_bb);
-    this->visit(ctx->block()[0]);
-    condition_bb->exit_true = instructions_bb;
-    instructions_bb->exit_true = out_bb;
-    instructions_bb->exit_false = out_bb;
+    BasicBlock* last_condition_bb = nullptr;
 
     // Following blocks
-    for(int i = 1; i < ctx->expression().size() - 1; i++) {
-        
-        // 'Else if' condition
+    for(int i = 0; i < ctx->expression().size() - 1; i++) 
+    {
+        // 'if' condition
         auto expression = ctx->expression()[i];
+
+        auto condition_bb = new BasicBlock(graph, graph->new_BB_name());
+        graph->add_bb(condition_bb);
+
+        graph->current_bb = condition_bb;
         this->visit(expression);
-        auto new_condition_bb = new BasicBlock(graph, graph->new_BB_name());
-        new_condition_bb->test_var_name = expressions.top();
+
+        condition_bb->test_var_name = expressions.top();
         expressions.pop();
+        
+        if(last_condition_bb) 
+        {
+            last_condition_bb->exit_false = condition_bb;
+        }
 
-        // Branching with the previous block
-        condition_bb->exit_false = new_condition_bb;
+        // Branching the first bb
+        if(i == 0)
+        {
+            block->exit_true = condition_bb;
+            block->exit_false = condition_bb;
+        }
 
-        // 'Else if' block
-        instructions_bb = new BasicBlock(graph, graph->new_BB_name());
-        graph->add_bb(instructions_bb);
+        // 'if' block
+        auto block_bb = new BasicBlock(graph, graph->new_BB_name());
+        graph->add_bb(block_bb);
+
+        graph->current_bb = condition_bb;
         this->visit(ctx->block()[i]);
-        new_condition_bb->exit_true = instructions_bb;
-        instructions_bb->exit_true = out_bb;
-        instructions_bb->exit_false = out_bb;
-    
-        // Keeping memory of the last condition bb
-        condition_bb = new_condition_bb;
+
+        // bb linking
+        condition_bb->exit_true = block_bb;
+        condition_bb->exit_false = out_bb;
+        block_bb->exit_true = out_bb;
+        block_bb->exit_false = out_bb;
+
+        // last condition bb
+        last_condition_bb = condition_bb;
     }
 
-    // Counting the number of conditions in the if/else_if/else sequence
-    int expressionsCount = ctx->expression().size(); 
-
     // There's an 'else' block
-    if (ctx->block()[expressionsCount]) {
+    if (ctx->block().size() > ctx->expression().size()) 
+    {
+        auto else_block = ctx->block()[ctx->expression().size()];
 
-        auto instructions_bb = new BasicBlock(graph, graph->new_BB_name());
-        graph->add_bb(instructions_bb);
-        this->visit(ctx->block()[expressionsCount]);
-        condition_bb->exit_false = instructions_bb;
-        instructions_bb->exit_true = out_bb;
-        instructions_bb->exit_false = out_bb;
-    
-    // There isn't
-    } else {
-    
-        condition_bb->exit_false = out_bb;
-    
+        auto else_bb = new BasicBlock(graph, graph->new_BB_name());
+        graph->add_bb(else_bb);
+
+        graph->current_bb = else_bb;
+        this->visit(else_block);
+
+        last_condition_bb->exit_false = else_bb;
+        else_bb->exit_true = out_bb;
+        else_bb->exit_false = out_bb;
     }
 
     // Setting current bb to the out bb

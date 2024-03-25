@@ -1,9 +1,16 @@
-int main() {
+int main() 
+{
     int a = 5;
     int b = 3;
-    if (a < b) {
+
+    if (a < b) 
+    {
         return a;
-    } else {
+    } 
+    else 
+    {
         return b;
     }
+
+    return -1;
 }

@@ -24,11 +24,15 @@ public:
     virtual antlrcpp::Any visitCall_stmt(ifccParser::Call_stmtContext* ctx) override;
     virtual antlrcpp::Any visitFunction_call(ifccParser::Function_callContext* ctx) override;
     virtual antlrcpp::Any visitDeclaration(ifccParser::DeclarationContext* ctx) override;
-    virtual antlrcpp::Any visitLoop(ifccParser::LoopContext *ctx) override;
-    virtual antlrcpp::Any visitCondition(ifccParser::ConditionContext *ctx) override;
+    virtual antlrcpp::Any visitLoop(ifccParser::LoopContext* ctx) override;
+    virtual antlrcpp::Any visitCondition(ifccParser::ConditionContext* ctx) override;
+    virtual antlrcpp::Any visitExprAnd(ifccParser::ExprAndContext* ctx) override;
+    virtual antlrcpp::Any visitExprCmp(ifccParser::ExprCmpContext* ctx) override;
+    virtual antlrcpp::Any visitExprOr(ifccParser::ExprOrContext* ctx) override;
+    virtual antlrcpp::Any visitExprNot(ifccParser::ExprNotContext* ctx) override;
 
 private:
-    int                         stack = 0;
-    std::stack<std::string>     expressions;
-    IR                          graphs;
+    int                     stack = 0;
+    std::stack<std::string> expressions;
+    IR                      graphs;
 };

@@ -51,7 +51,6 @@ void Backend::block(BasicBlock* bb)
     {
         instruction(instr);
     }
-
 }
 
 void Backend::instruction(IRInstr* instr)

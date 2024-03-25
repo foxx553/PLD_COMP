@@ -201,7 +201,7 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
     BasicBlock* last_condition_bb = nullptr;
 
     // Following blocks
-    for(int i = 0; i < ctx->expression().size(); i++) 
+    for(int i = 0; i < ctx->expression().size(); i++)
     {
         // 'if' condition
         auto expression = ctx->expression()[i];
@@ -214,8 +214,8 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
 
         condition_bb->test_var_name = expressions.top();
         expressions.pop();
-        
-        if(last_condition_bb) 
+
+        if(last_condition_bb)
         {
             last_condition_bb->exit_false = condition_bb;
         }
@@ -244,7 +244,7 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
     }
 
     // There's an 'else' block
-    if (ctx->block().size() > ctx->expression().size()) 
+    if(ctx->block().size() > ctx->expression().size())
     {
         auto else_block = ctx->block()[ctx->expression().size()];
 
@@ -262,5 +262,15 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
     graph->current_bb = out_bb;
 
     return 0;
+}
+
+antlrcpp::Any Visitor::visitExprAnd(ifccParser::ExprAndContext* ctx)
+{
 
 }
+
+antlrcpp::Any Visitor::visitExprCmp(ifccParser::ExprCmpContext* ctx) {}
+
+antlrcpp::Any Visitor::visitExprOr(ifccParser::ExprOrContext* ctx) {}
+
+antlrcpp::Any Visitor::visitExprNot(ifccParser::ExprNotContext* ctx) {}

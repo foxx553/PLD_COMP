@@ -10,6 +10,7 @@ instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt)+ ;
 function_call : IDENTIFIER (('(' ')') | ('(' expression (',' expression)* ')')) ;
 assignation : IDENTIFIER '=' expression ;
 declaration : IDENTIFIER | assignation ;
+loop : 'while' '(' expression ')' '{' instruction '}';
 
 expression: '(' expression ')'                          #exprPar
           | expression OR expression                    #exprOr

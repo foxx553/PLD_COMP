@@ -51,6 +51,7 @@ void Backend::block(BasicBlock* bb)
     {
         instruction(instr);
     }
+
 }
 
 void Backend::instruction(IRInstr* instr)
@@ -95,6 +96,12 @@ void Backend::instruction(IRInstr* instr)
         break;
     case Operation::cmp_le:
         instruction_cmp_le(instr);
+        break;
+    case Operation::cmp_lt_eq:
+        instruction_cmp_lt_eq(instr);
+        break;
+    case Operation::cmp_le_eq:
+        instruction_cmp_le_eq(instr);
         break;
     }
 }

@@ -33,6 +33,8 @@ enum class Operation
     cmp_eq,  // a == b
     cmp_lt,  // a < b
     cmp_le,  // a <= b
+    cmp_lt_eq,
+    cmp_le_eq,
     ret      // return a
 };
 
@@ -45,7 +47,8 @@ public:
     IRInstr(BasicBlock* bb_, Operation op, Type t, std::vector<std::string> params);
     IRInstr(Operation op, Type t, std::vector<std::string> params);
 
-    const std::string& get_param(int i) const; 
+    const std::string& get_param(int i) const;
+    //const std::vector<std::string>& get_params() const; 
     const Operation get_operation() const;
 
 private:

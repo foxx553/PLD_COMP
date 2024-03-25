@@ -24,3 +24,8 @@ const Operation IRInstr::get_operation() const
 {
     return op;
 }
+
+/*const std::vector<std::string>& get_params() const
+{
+    return params;
+} */

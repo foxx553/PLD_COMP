@@ -5,7 +5,6 @@ CFG::CFG(const std::string& name) : name(name), nextFreeSymbolIndex(0), nextBBnu
 {
     begin_bb = new BasicBlock(this, name + new_BB_name());
     end_bb = new BasicBlock(this, name + new_BB_name());
-    begin_bb->exit_true = end_bb;
 
     current_bb = begin_bb;
 

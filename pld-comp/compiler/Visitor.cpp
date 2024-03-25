@@ -17,8 +17,12 @@ antlrcpp::Any Visitor::visitFunction(ifccParser::FunctionContext* ctx)
 {
     auto name = ctx->IDENTIFIER()[0]->getText();
 
-    graphs.push_back(new CFG(name));
+    auto current_CFG = new CFG(name);
+
+    graphs.push_back(current_CFG);
     this->visitChildren(ctx);
+
+    current_CFG->current_bb->exit_true = current_CFG->end_bb;
 
     return 0;
 }
@@ -181,7 +185,6 @@ antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
 
 antlrcpp::Any Visitor::visitLoop(ifccParser::LoopContext* ctx)
 {
-    
     return 0;
 }
 

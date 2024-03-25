@@ -40,6 +40,7 @@ void BackendASM::block_jump_conditional(BasicBlock* bb)
     o << "\tjmp ." << bb->exit_false->get_name() << std::endl;
 }
 
+
 void BackendASM::block_jump_simple(BasicBlock* bb)
 {
     o << "\tjmp ." << bb->exit_true->get_name() << std::endl;
@@ -92,30 +93,96 @@ void BackendASM::instruction_ret(IRInstr* instr)
 
 void BackendASM::instruction_rmem(IRInstr* instr)
 {
-    // TO-DO
+    o << "\tmovq -" << instr->get_param(1) << "(%rbp), %rax" << std::endl;
+    o << "\tmovl (%rax), %eax" << std::endl;
+    o << "\t%eax, -" << instr->get_param(0) << ", (%rbp)"<< std::endl;
+
 }
 
 void BackendASM::instruction_wmem(IRInstr* instr)
 {
-    // TO-DO
+    
+    o << "\tmovq -" << instr->get_param(1) << "(%rbp), %rax" << std::endl;
+    o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+    o << "\t%edx, (%rax)"<< std::endl;
+
 }
 
 void BackendASM::instruction_call(IRInstr* instr)
 {
     // TO-DO
+    /*int nb_params=instr->get_params.size();
+
+    for (int i=0; i<nb_params; i++){
+
+        switch(i)
+        {
+            case 0:
+                break;
+            case 1:
+                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                break;
+            case 2:
+                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                break;
+            case 3:
+                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                break;
+            case 4:
+                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                break;
+            case 5:
+                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                break;
+            case 6:
+                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                break;   
+        }
+    }*/
+
 }
 
 void BackendASM::instruction_cmp_eq(IRInstr* instr)
 {
-    // TO-DO
+    o << "\tmovl -" << instr->get_param(1) << "(%rbp), %eax" << std::endl;
+    o << "\tcmpl -" << instr->get_param(2) << "(%rbp), %eax" << std::endl;
+    o << "\tsete %al" << std::endl;
+    o << "\tmovzbl %al, %eax" << std::endl;
+    o << "\tmovl %eax, -" << instr->get_param(0) << "(%rbp)" <<std::endl;
 }
 
 void BackendASM::instruction_cmp_lt(IRInstr* instr)
 {
-    // TO-DO
+    o << "\tmovl -" << instr->get_param(1) << "(%rbp), %eax" << std::endl;
+    o << "\tcmpl -" << instr->get_param(2) << "(%rbp), %eax" << std::endl;
+    o << "\tsetl %al" << std::endl;
+    o << "\tmovzbl %al, %eax" << std::endl;
+    o << "\tmovl %eax, -" << instr->get_param(0) << "(%rbp)" <<std::endl;
+}
+
+void BackendASM::instruction_cmp_lt_eq(IRInstr* instr)
+{
+    o << "\tmovl -" << instr->get_param(1) << "(%rbp), %eax" << std::endl;
+    o << "\tcmpl -" << instr->get_param(2) << "(%rbp), %eax" << std::endl;
+    o << "\tsetle %al" << std::endl;
+    o << "\tmovzbl %al, %eax" << std::endl;
+    o << "\tmovl %eax, -" << instr->get_param(0) << "(%rbp)" <<std::endl;
 }
 
 void BackendASM::instruction_cmp_le(IRInstr* instr)
 {
-    // TO-DO
+    o << "\tmovl -" << instr->get_param(1) << "(%rbp), %eax" << std::endl;
+    o << "\tcmpl -" << instr->get_param(2) << "(%rbp), %eax" << std::endl;
+    o << "\tsetg %al" << std::endl;
+    o << "\tmovzbl %al, %eax" << std::endl;
+    o << "\tmovl %eax, -" << instr->get_param(0) << "(%rbp)" <<std::endl;
+}
+
+void BackendASM::instruction_cmp_le_eq(IRInstr* instr)
+{
+    o << "\tmovl -" << instr->get_param(1) << "(%rbp), %eax" << std::endl;
+    o << "\tcmpl -" << instr->get_param(2) << "(%rbp), %eax" << std::endl;
+    o << "\tsetge %al" << std::endl;
+    o << "\tmovzbl %al, %eax" << std::endl;
+    o << "\tmovl %eax, -" << instr->get_param(0) << "(%rbp)" <<std::endl;
 }

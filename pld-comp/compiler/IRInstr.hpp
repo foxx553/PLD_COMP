@@ -48,7 +48,7 @@ public:
     IRInstr(Operation op, Type t, std::vector<std::string> params);
 
     const std::string& get_param(int i) const;
-    //const std::vector<std::string>& get_params() const; 
+    const std::vector<std::string>& get_params() const; 
     const Operation get_operation() const;
 
 private:

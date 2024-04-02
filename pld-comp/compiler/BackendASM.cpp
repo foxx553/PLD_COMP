@@ -111,7 +111,7 @@ void BackendASM::instruction_wmem(IRInstr* instr)
 void BackendASM::instruction_call(IRInstr* instr)
 {
     // TO-DO
-    /*int nb_params=instr->get_params.size();
+    int nb_params=instr->get_params().size();
 
     for (int i=0; i<nb_params; i++){
 
@@ -138,7 +138,7 @@ void BackendASM::instruction_call(IRInstr* instr)
                 o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
                 break;   
         }
-    }*/
+    }
 
 }
 

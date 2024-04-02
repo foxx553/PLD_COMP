@@ -35,7 +35,7 @@ void BackendASM::block_begin(BasicBlock* bb)
 void BackendASM::block_jump_conditional(BasicBlock* bb)
 {
     int index = bb->get_graph()->get_index(bb->test_var_name);
-    o << "\tcmpl -" << "$0, -" << index << "(%rbp)" << std::endl;
+    o << "\tcmpl " << "$0, -" << index << "(%rbp)" << std::endl;
     o << "\tje ." << bb->exit_true->get_name() << std::endl;
     o << "\tjmp ." << bb->exit_false->get_name() << std::endl;
 }

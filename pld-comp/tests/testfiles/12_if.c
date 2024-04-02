@@ -1,16 +1,13 @@
 int main() 
 {
-    int a = 5;
-    int b = 3;
-
-    if (a < b) 
+    if (1 < 2) 
     {
-        return a;
+        return 1;
     } 
     else 
     {
-        return b;
+        return 2;
     }
 
-    return -1;
+    return 0;
 }

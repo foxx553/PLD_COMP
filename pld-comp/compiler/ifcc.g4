@@ -15,9 +15,9 @@ loop : 'while' '(' expression ')' block;
 condition : 'if' '(' expression ')' block ('else if' '(' expression ')' block)* ('else' block)?;
 
 expression: '(' expression ')'                          #exprPar
+          | NOT expression                              #exprNot
           | expression OR expression                    #exprOr
           | expression AND expression                   #exprAnd
-          | NOT expression                              #exprNot
           | expression (EQ|NE|LT|GT|LE|GE) expression   #exprCmp
           | (SUB|ADD) expression                        #exprUnaire
           | expression (MUL|DIV) expression             #exprMultDiv

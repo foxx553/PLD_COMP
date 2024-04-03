@@ -3,6 +3,8 @@
 #include "BasicBlock.hpp"
 #include "IRInstr.hpp"
 
+#include <tuple>
+
 typedef std::vector<CFG*> IR;
 
 /** The class for the control flow graph, also includes the symbol table */
@@ -20,19 +22,19 @@ public:
     CFG(const std::string& name);
     virtual ~CFG();
 
-    const std::string& get_name() const;
+    const std::string&              get_name() const;
     const std::vector<BasicBlock*>& get_blocks() const;
-    const Type get_type(const std::string& name) const;
-    const int get_index(const std::string& name) const;
+    const Type                      get_type(const std::string& name) const;
+    const int                       get_index(const std::string& name) const;
 
-    void add_bb(BasicBlock* bb);
+    void        add_bb(BasicBlock* bb);
     std::string IR_reg_to_asm(std::string reg); /**< helper method: inputs a IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
 
     // symbol table methods
-    void        add_to_symbol_table(std::string name, Type t);
-    std::string create_new_tempvar(Type t);
-    int         get_var_index(std::string name);
-    Type        get_var_type(std::string name);
+    void                         add_to_symbol_table(std::string name, Type t);
+    std::tuple<std::string, int> create_new_tempvar(Type t);
+    int                          get_var_index(std::string name);
+    Type                         get_var_type(std::string name);
 
     // basic block management
     std::string new_BB_name();

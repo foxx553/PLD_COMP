@@ -27,11 +27,16 @@ public:
     virtual antlrcpp::Any visitLoop(ifccParser::LoopContext* ctx) override;
     virtual antlrcpp::Any visitCondition(ifccParser::ConditionContext* ctx) override;
     virtual antlrcpp::Any visitExprAnd(ifccParser::ExprAndContext* ctx) override;
-    virtual antlrcpp::Any visitExprCmp(ifccParser::ExprCmpContext* ctx) override;
     virtual antlrcpp::Any visitExprOr(ifccParser::ExprOrContext* ctx) override;
     virtual antlrcpp::Any visitExprNot(ifccParser::ExprNotContext* ctx) override;
+    virtual antlrcpp::Any visitExprCmp(ifccParser::ExprCmpContext* ctx) override;
 
 private:
+    std::string pop_expression(CFG* graph);
+    void reduce_not();
+    void reduce_and();
+    void reduce_or();
+
     int                     stack = 0;
     std::stack<std::string> expressions;
     IR                      graphs;

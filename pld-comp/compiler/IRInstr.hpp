@@ -32,9 +32,6 @@ enum class Operation
     call,    // fct()
     cmp_eq,  // a == b
     cmp_lt,  // a < b
-    cmp_le,  // a <= b
-    cmp_lt_eq,
-    cmp_le_eq,
     ret      // return a
 };
 
@@ -47,9 +44,9 @@ public:
     IRInstr(BasicBlock* bb_, Operation op, Type t, std::vector<std::string> params);
     IRInstr(Operation op, Type t, std::vector<std::string> params);
 
-    const std::string& get_param(int i) const;
-    const std::vector<std::string>& get_params() const; 
-    const Operation get_operation() const;
+    const std::string&              get_param(int i) const;
+    const std::vector<std::string>& get_params() const;
+    const Operation                 get_operation() const;
 
 private:
     BasicBlock*              bb; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */

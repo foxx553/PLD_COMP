@@ -10,10 +10,9 @@ ifcc
 ifcc-test-output/
 a.out
 ret42.c
-compiler/config.mk
-compiler/*.c
-compiler/*.o
-compiler/*.s
+**/compiler/*.c
+**/compiler/*.o
+**/compiler/*.s
 .vscode/
 demo/
 ret42.s

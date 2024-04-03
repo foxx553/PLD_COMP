@@ -34,9 +34,6 @@ protected:
     virtual void instruction_call(IRInstr* instr) = 0;
     virtual void instruction_cmp_eq(IRInstr* instr) = 0;
     virtual void instruction_cmp_lt(IRInstr* instr) = 0;
-    virtual void instruction_cmp_le(IRInstr* instr) = 0;
-    virtual void instruction_cmp_le_eq(IRInstr* instr) = 0;
-    virtual void instruction_cmp_lt_eq(IRInstr* instr) = 0;
 
     IR& ir;
     std::ostream& o;

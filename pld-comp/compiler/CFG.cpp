@@ -91,11 +91,11 @@ void CFG::add_to_symbol_table(std::string name, Type t)
     }
 }
 
-std::string CFG::create_new_tempvar(Type t)
+std::tuple<std::string, int> CFG::create_new_tempvar(Type t)
 {
     auto name = "tmp" + std::to_string(nextTempIndex++);
     add_to_symbol_table(name, t);
-    return name;
+    return {name, get_var_index(name)};
 }
 
 int CFG::get_var_index(std::string name)

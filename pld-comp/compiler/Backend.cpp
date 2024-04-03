@@ -93,14 +93,5 @@ void Backend::instruction(IRInstr* instr)
     case Operation::cmp_lt:
         instruction_cmp_lt(instr);
         break;
-    case Operation::cmp_le:
-        instruction_cmp_le(instr);
-        break;
-    case Operation::cmp_lt_eq:
-        instruction_cmp_lt_eq(instr);
-        break;
-    case Operation::cmp_le_eq:
-        instruction_cmp_le_eq(instr);
-        break;
     }
 }

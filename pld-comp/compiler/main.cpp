@@ -10,6 +10,7 @@
 #include "generated/ifccParser.h"
 
 #include "Visitor.hpp"
+#include "BackendARM.hpp"
 #include "BackendASM.hpp"
 
 using namespace antlr4;
@@ -61,7 +62,7 @@ int main(int argn, const char** argv)
 
     // on génère le backend
     std::ofstream file(output);
-    BackendASM backend(graphs, output.empty() ? std::cout : file);
+    BackendARM backend(graphs, output.empty() ? std::cout : file);
     backend.generate();
 
     return 0;

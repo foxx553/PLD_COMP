@@ -120,25 +120,27 @@ void BackendASM::instruction_call(IRInstr* instr)
             case 0:
                 break;
             case 1:
-                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %eax" << std::endl;
+                o << "\tmovl" << "(%eax), %edi" << std::endl;
                 break;
             case 2:
-                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                o << "\tmovl" << instr->get_param(1) <<"(%rbp), %esi" << std::endl;
                 break;
             case 3:
-                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                o << "\tmovl" << instr->get_param(2) <<"(%rbp), %edx" << std::endl;
                 break;
             case 4:
-                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                o << "\tmovl" << instr->get_param(3) <<"(%rbp), %ecx" << std::endl;
                 break;
             case 5:
-                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %r8d" << std::endl;
                 break;
             case 6:
-                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %edx" << std::endl;
+                o << "\tmovl" << instr->get_param(0) <<"(%rbp), %r9d" << std::endl;
                 break;   
         }
     }
+    o << "\tcall" << << std::endl;
 
 }
 

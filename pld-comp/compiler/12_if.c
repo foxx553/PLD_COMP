@@ -1,16 +1,12 @@
-int main() 
-{
-    int a = 5;
-    int b = 3;
+int add(int a) {
+    return a+2;
+}
 
-    if (a < b) 
-    {
-        return a;
-    } 
-    else 
-    {
-        return b;
-    }
-
-    return -1;
+int main() {
+    int x = 1;
+    int y = 2;
+    int f= 6;
+    int k=5,g= 7,t=5;
+    int z = add(x);
+    return z;
 }

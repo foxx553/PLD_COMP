@@ -55,14 +55,14 @@ void BackendARM::block_jump_simple(BasicBlock* bb)
 
 void BackendARM::instruction_ldconst(IRInstr* instr)
 {
-    o << "\tmov w" << instr->get_param(0) << ", #" << instr->get_param(1) << std::endl;
-    // o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tmov w8, #" << instr->get_param(1) << std::endl;
+    o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_copy(IRInstr* instr)
 {
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_add(IRInstr* instr)
@@ -95,7 +95,7 @@ void BackendARM::instruction_div(IRInstr* instr)
 
 void BackendARM::instruction_ret(IRInstr* instr)
 {
-    // o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+   o << "\tldr w0, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_rmem(IRInstr* instr)

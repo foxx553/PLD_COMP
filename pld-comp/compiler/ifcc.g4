@@ -8,9 +8,10 @@ function : 'int' IDENTIFIER '(' ('int' IDENTIFIER (',' 'int' IDENTIFIER)* )? ')'
 instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt | loop | condition)+ ;
 
 block : '{' instruction '}';
+array : IDENTIFIER '[' expression ']';
 function_call : IDENTIFIER '(' (expression (',' expression)* )? ')' ;
-assignation : IDENTIFIER '=' expression ;
-declaration : IDENTIFIER | assignation ;
+assignation : IDENTIFIER '=' expression | array '=' expression;
+declaration : IDENTIFIER | assignation | array; 
 loop : 'while' '(' expression ')' block;
 condition : 'if' '(' expression ')' block ('else if' '(' expression ')' block)* ('else' block)?;
 
@@ -25,6 +26,7 @@ expression: '(' expression ')'                          #exprPar
           | IDENTIFIER                                  #exprVariable
           | CONST                                       #exprConstante
           | function_call                               #exprFunction
+          | array                                       #exprArray
           ;
 
 return_stmt : RETURN expression ';' ;

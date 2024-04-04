@@ -110,37 +110,13 @@ void BackendASM::instruction_call(IRInstr* instr)
 {
     // TO-DO
     int nb_params = instr->get_params().size();
+    std::string registres[] = {"edi","esi","edx","ecx","r8d","r9d"};
 
-    for(int i = 0; i < nb_params; i++)
+    for(int i = 1; i < nb_params; i++)
     {
-        switch(i)
-        {
-        case 0:
-            break;
-        case 1:
-            o << "\tmovl" << instr->get_param(0) << "(%rbp), %eax" << std::endl;
-            o << "\tmovl"
-              << "(%eax), %edi" << std::endl;
-            break;
-        case 2:
-            o << "\tmovl" << instr->get_param(1) << "(%rbp), %esi" << std::endl;
-            break;
-        case 3:
-            o << "\tmovl" << instr->get_param(2) << "(%rbp), %edx" << std::endl;
-            break;
-        case 4:
-            o << "\tmovl" << instr->get_param(3) << "(%rbp), %ecx" << std::endl;
-            break;
-        case 5:
-            o << "\tmovl" << instr->get_param(0) << "(%rbp), %r8d" << std::endl;
-            break;
-        case 6:
-            o << "\tmovl" << instr->get_param(0) << "(%rbp), %r9d" << std::endl;
-            break;
-        }
+        o << "\tmovl" << instr->get_param(i) << "(%rbp), %" << registres[i-1] << std::endl;
     }
-
-    o << "\tcall" << std::endl;
+    o << "\tcall" << instr->get_param(0) <<std::endl;
 }
 
 void BackendASM::instruction_cmp_eq(IRInstr* instr)

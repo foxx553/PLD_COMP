@@ -178,6 +178,48 @@ antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
 
 antlrcpp::Any Visitor::visitLoop(ifccParser::LoopContext* ctx)
 {
+    // Getting current CFG
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    // Creating bb after the 'while'
+    auto out_bb = new BasicBlock(graph, graph->new_BB_name());
+    graph->add_bb(out_bb);
+
+    // 'while' condition
+    auto expression = ctx->expression();
+    auto condition_bb = new BasicBlock(graph, graph->new_BB_name());
+    graph->add_bb(condition_bb);
+
+    // Branching the previous block to the 'while' condition
+    block->exit_true = condition_bb;
+
+    // Visiting the condition expression
+    graph->current_bb = condition_bb;
+    this->visit(expression);
+    condition_bb = graph->current_bb; // on récupère le "bloc out" de l'expression
+
+    condition_bb->test_var_name = pop_expression(graph);
+
+    // 'while' block
+    auto block_bb = new BasicBlock(graph, graph->new_BB_name());
+    graph->add_bb(block_bb);
+
+    // Branching the condition to the beginning of the block
+    condition_bb->exit_true = block_bb;
+
+    // Branching the 'while' block to the condition bb
+    graph->current_bb = block_bb;
+    this->visit(ctx->block());
+    block_bb = graph->current_bb;  // on récupère le "bloc out" du bloc
+    block_bb->exit_true = condition_bb;
+
+    // bb linking
+    condition_bb->exit_false = out_bb;
+
+    // Setting current bb to the out bb
+    graph->current_bb = out_bb;
+
     return 0;
 }
 

@@ -47,14 +47,15 @@ void BackendASM::block_jump_simple(BasicBlock* bb)
 }
 
 void BackendASM::instruction_ldconst(IRInstr* instr)
-{
+{ 
     o << "\tmovl $" << instr->get_param(1) << ", -" << instr->get_param(0) << "(%rbp)" << std::endl;
 }
 
-void BackendASM::instruction_copy(IRInstr* instr)
+void BackendASM::instruction_copy(IRInstr* instr) //assignation
 {
     o << "\tmovl -" << instr->get_param(1) << "(%rbp), %eax" << std::endl;
     o << "\tmovl %eax, -" << instr->get_param(0) << "(%rbp)" << std::endl;
+    o << "movq $-" << instr->get_param(0) 
 }
 
 void BackendASM::instruction_add(IRInstr* instr)

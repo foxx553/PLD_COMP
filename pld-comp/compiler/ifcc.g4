@@ -10,7 +10,7 @@ instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt | loop | con
 block : '{' instruction '}';
 array : IDENTIFIER '[' expression ']';
 function_call : IDENTIFIER '(' (expression (',' expression)* )? ')' ;
-assignation : IDENTIFIER '=' expression | array '=' expression;
+assignation : LVALUE '=' expression;
 declaration : IDENTIFIER | assignation | array; 
 loop : 'while' '(' expression ')' block;
 condition : 'if' '(' expression ')' block ('else if' '(' expression ')' block)* ('else' block)?;
@@ -48,6 +48,7 @@ GT : '>';
 LE : '<=';
 GE : '>=';
 RETURN : 'return' ;
+LVALUE : IDENTIFIER | array;
 CONST : [0-9]+ ;
 COMMENT : ('/*' .*? '*/' | '//' .*? '\n' ) -> skip ;
 DIRECTIVE : '#' .*? '\n' -> skip ;

@@ -42,6 +42,7 @@ void BackendARM::block_begin(BasicBlock* bb)
 
 void BackendARM::block_jump_conditional(BasicBlock* bb)
 {
+    // std::cout << "block_jump_conditional" <<std::endl;
     int index = bb->get_graph()->get_index(bb->test_var_name);
     o << "\tldr w" << index << ", [" << "sp, #" << index << "]" << std::endl;
     o << "\tcbnz w" << index << ", ." << bb->exit_true->get_name() << std::endl;
@@ -61,45 +62,54 @@ void BackendARM::instruction_ldconst(IRInstr* instr)
 
 void BackendARM::instruction_copy(IRInstr* instr)
 {
+    // std::cout << "instruction_copy" <<std::endl;
     o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
     o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_add(IRInstr* instr)
 {
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tadd w" << instr->get_param(0) << ", w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    // std::cout << "instruction_add" <<std::endl;
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w2, [sp, #" << instr->get_param(2) << "]" << std::endl;
+    o << "\tadd w8, w8, w2" << std::endl;
+    o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_sub(IRInstr* instr)
 {
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tsub w" << instr->get_param(0) << ", w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    // std::cout << "instruction_add" <<std::endl;
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w2, [sp, #" << instr->get_param(2) << "]" << std::endl;
+    o << "\tsub w8, w8, w2" << std::endl;
+    o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_mul(IRInstr* instr)
 {
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tmul w" << instr->get_param(0) << ", w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w2, [sp, #" << instr->get_param(2) << "]" << std::endl;
+    o << "\tmul w8, w8, w2" << std::endl;
+    o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_div(IRInstr* instr)
 {
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tsdiv w" << instr->get_param(0) << ", w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w2, [sp, #" << instr->get_param(2) << "]" << std::endl;
+    o << "\tsdiv w8, w8, w2" << std::endl;
+    o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_ret(IRInstr* instr)
 {
+//    std::cout << "instruction_ret" <<std::endl;
    o << "\tldr w0, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_rmem(IRInstr* instr)
 {
+    // std::cout << "instruction_rmem" <<std::endl;
     o << "\tldr x" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
     o << "\tldr w" << instr->get_param(0) << ", [x" << instr->get_param(0) << "]" << std::endl;
     o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
@@ -107,6 +117,7 @@ void BackendARM::instruction_rmem(IRInstr* instr)
 
 void BackendARM::instruction_wmem(IRInstr* instr)
 {
+    // std::cout << "instruction_wmem" <<std::endl;
     o << "\tldr x" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
     o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
     o << "\tstr w" << instr->get_param(0) << ", [x" << instr->get_param(0) << "]" << std::endl;
@@ -115,6 +126,7 @@ void BackendARM::instruction_wmem(IRInstr* instr)
 void BackendARM::instruction_call(IRInstr* instr)
 {
     // TO-DO
+    // std::cout << "instruction_call" <<std::endl;
     int nb_params = instr->get_params().size();
 
     for (int i = 0; i < nb_params; i++) {
@@ -124,22 +136,22 @@ void BackendARM::instruction_call(IRInstr* instr)
             case 0:
                 break;
             case 1:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+                o << "\tldr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
                 break;
             case 2:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+                o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
                 break;
             case 3:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+                o << "\tldr w8, [sp, #" << instr->get_param(2) << "]" << std::endl;
                 break;
             case 4:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+                o << "\tldr w8, [sp, #" << instr->get_param(3) << "]" << std::endl;
                 break;
             case 5:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+                o << "\tldr w8, [sp, #" << instr->get_param(4) << "]" << std::endl;
                 break;
             case 6:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+                o << "\tldr w8, [sp, #" << instr->get_param(5) << "]" << std::endl;
                 break;
         }
     }
@@ -148,6 +160,7 @@ void BackendARM::instruction_call(IRInstr* instr)
 
 void BackendARM::instruction_cmp_eq(IRInstr* instr)
 {
+    // std::cout << "instruction_cmp_eq" <<std::endl;
     o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
     o << "\tcmp w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
     o << "\tsete w" << instr->get_param(0) << std::endl;
@@ -157,6 +170,7 @@ void BackendARM::instruction_cmp_eq(IRInstr* instr)
 
 void BackendARM::instruction_cmp_lt(IRInstr* instr)
 {
+    // std::cout << "instruction_cmp_lt" <<std::endl;
     o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
     o << "\tcmp w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
     o << "\tsetl w" << instr->get_param(0) << std::endl;
@@ -166,6 +180,7 @@ void BackendARM::instruction_cmp_lt(IRInstr* instr)
 
 void BackendARM::instruction_cmp_lt_eq(IRInstr* instr)
 {
+    // std::cout << "instruction_cmp_lt_eq" <<std::endl;
     o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
     o << "\tcmp w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
     o << "\tsetle w" << instr->get_param(0) << std::endl;
@@ -175,6 +190,7 @@ void BackendARM::instruction_cmp_lt_eq(IRInstr* instr)
 
 void BackendARM::instruction_cmp_le(IRInstr* instr)
 {
+    // std::cout << "instruction_cmp_le" <<std::endl;
     o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
     o << "\tcmp w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
     o << "\tsetg w" << instr->get_param(0) << std::endl;
@@ -184,6 +200,7 @@ void BackendARM::instruction_cmp_le(IRInstr* instr)
 
 void BackendARM::instruction_cmp_le_eq(IRInstr* instr)
 {
+    // std::cout << "instruction_cmp_le_eq" <<std::endl;
     o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
     o << "\tcmp w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
     o << "\tsetge w" << instr->get_param(0) << std::endl;

@@ -19,17 +19,21 @@ void BackendARM::graph_begin(CFG* cfg)
     o << std::endl << "_" << cfg->get_name() << ":                                  ; @" << cfg->get_name() << std::endl;
     o << "\t.cfi_startproc" << std::endl;
     o << "; %bb.0:" << std::endl;
-    o << "\tsub	sp, sp, #16" << std::endl;
-    o << "\t.cfi_def_cfa_offset 16" << std::endl;
-    o << "\tstr	wzr, [sp, #12]" << std::endl;
+    o << "\tsub	sp, sp, #32" << std::endl;
+    o << "\tstp	x29, x30, [sp, #504]" << std::endl;
+    o << "\tadd	x29, sp, #504" << std::endl;
+    // o << "\t.cfi_def_cfa_offset 32" << std::endl;
+    o << "\tstr	w8, [sp, #4]" << std::endl;
+    o << "\tstur    wzr, [x29, #-4]" << std::endl;
+    
     o << "\tb .main_BB_0" << std::endl;
 }
 
 void BackendARM::graph_end(CFG* cfg)
 {
-    
-    o << "\t# epilogue" << std::endl;
-    o << "\tadd	sp, sp, #16" << std::endl;
+    o << "\t; epilogue" << std::endl;
+    o << "\tldp x29, x30, [sp, #504]" << std::endl;
+    o << "\tadd	sp, sp, #32" << std::endl;
     o << "\tret" << std::endl;
     o << "\t.cfi_endproc" << std::endl;
     o << "\t\t\t\t\t\t\t\t\t\t; -- End function" << std::endl;
@@ -124,13 +128,13 @@ void BackendARM::instruction_call(IRInstr* instr)
 {
     // TO-DO
     int nb_params = instr->get_params().size();
-    std::string registres[] = {"w1", "w2", "w3", "w4"};
+    std::string registres[] = {"w8", "w2", "w3", "w4"};
 
-    for(int i = 0; i < nb_params && i < 4; i++)
+    for(int i = 1; i < nb_params && i < 4; i++)
     {
-        o << "\tldr " << registres[i] << ", [sp, #" << (i + 2) * 4 << "]" << std::endl;
+        o << "\tldr " << registres[i-1] << ", [sp, #" << instr->get_param(i) << "]" << std::endl;
     }
-    o << "\tbl " << instr->get_param(0) << std::endl;
+    o << "\tbl _" << instr->get_param(0) << std::endl;
 }
 
     

@@ -1,6 +1,9 @@
+#include <stdio.h>
 int main()
 {
-    int z = 5;
+    int z = 0;
+
     putchar(z);
+
     return 0;
 }

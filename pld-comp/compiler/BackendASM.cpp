@@ -47,29 +47,28 @@ void BackendASM::block_jump_simple(BasicBlock* bb)
 }
 
 void BackendASM::instruction_ldconst(IRInstr* instr)
-{ 
-    o << "\tmovl $" << instr->get_param(1) << ", -" << instr->get_param(0) << "(%rbp)" << std::endl;
+{
+    o << "\tmovq $" << instr->get_param(1) << ", -" << instr->get_param(0) << "(%rbp)" << std::endl;
 }
 
-void BackendASM::instruction_copy(IRInstr* instr) //assignation
+void BackendASM::instruction_copy(IRInstr* instr)
 {
-    o << "\tmovl -" << instr->get_param(1) << "(%rbp), %eax" << std::endl;
-    o << "\tmovl %eax, -" << instr->get_param(0) << "(%rbp)" << std::endl;
-    o << "movq $-" << instr->get_param(0) 
+    o << "\tmovq -" << instr->get_param(1) << "(%rbp), %rax" << std::endl;
+    o << "\tmovq %rax, -" << instr->get_param(0) << "(%rbp)" << std::endl;
 }
 
 void BackendASM::instruction_add(IRInstr* instr)
 {
-    o << "\tmovl -" << instr->get_param(1) << "(%rbp), %eax" << std::endl;
-    o << "\taddl -" << instr->get_param(2) << "(%rbp), %eax" << std::endl;
-    o << "\tmovl %eax, -" << instr->get_param(0) << "(%rbp)" << std::endl;
+    o << "\tmovq -" << instr->get_param(1) << "(%rbp), %rax" << std::endl;
+    o << "\taddq -" << instr->get_param(2) << "(%rbp), %rax" << std::endl;
+    o << "\tmovq %rax, -" << instr->get_param(0) << "(%rbp)" << std::endl;
 }
 
 void BackendASM::instruction_sub(IRInstr* instr)
 {
-    o << "\tmovl -" << instr->get_param(1) << "(%rbp), %eax" << std::endl;
-    o << "\tsubl -" << instr->get_param(2) << "(%rbp), %eax" << std::endl;
-    o << "\tmovl %eax, -" << instr->get_param(0) << "(%rbp)" << std::endl;
+    o << "\tmovq -" << instr->get_param(1) << "(%rbp), %rax" << std::endl;
+    o << "\tsubq -" << instr->get_param(2) << "(%rbp), %rax" << std::endl;
+    o << "\tmovq %rax, -" << instr->get_param(0) << "(%rbp)" << std::endl;
 }
 
 void BackendASM::instruction_mul(IRInstr* instr)
@@ -89,35 +88,35 @@ void BackendASM::instruction_div(IRInstr* instr)
 
 void BackendASM::instruction_ret(IRInstr* instr)
 {
-    o << "\tmovl -" << instr->get_param(0) << "(%rbp), %eax" << std::endl;
+    o << "\tmovq -" << instr->get_param(0) << "(%rbp), %rax" << std::endl;
 }
 
 void BackendASM::instruction_rmem(IRInstr* instr)
 {
-    o << "\tmovq -" << instr->get_param(1) << "(%rbp), %rax" << std::endl;
+    o << "\tmovq -" << instr->get_param(0) << "(%rbp), %rax" << std::endl;
     o << "\tmovl (%rax), %eax" << std::endl;
-    o << "\t%eax, -" << instr->get_param(0) << ", (%rbp)" << std::endl;
+    o << "\tmovl %eax, -" << instr->get_param(1) << ", (%rbp)" << std::endl;
 }
 
 void BackendASM::instruction_wmem(IRInstr* instr)
 {
-
-    o << "\tmovq -" << instr->get_param(1) << "(%rbp), %rax" << std::endl;
-    o << "\tmovl" << instr->get_param(0) << "(%rbp), %edx" << std::endl;
-    o << "\t%edx, (%rax)" << std::endl;
+    o << "\tmovq %rbp, %rax" << std::endl; // rax = bp
+    o << "\taddq -" << instr->get_param(0) << "(%rbp), %rax" << std::endl; // rax = bp + dest
+    o << "\tmovq -" << instr->get_param(1) << "(%rbp), %rdx" << std::endl;
+    o << "\tmovq %rdx, (%rax)" << std::endl;
 }
 
 void BackendASM::instruction_call(IRInstr* instr)
 {
     // TO-DO
-    int nb_params = instr->get_params().size();
-    std::string registres[] = {"edi","esi","edx","ecx","r8d","r9d"};
+    int         nb_params = instr->get_params().size();
+    std::string registres[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 
     for(int i = 1; i < nb_params; i++)
     {
-        o << "\tmovl" << instr->get_param(i) << "(%rbp), %" << registres[i-1] << std::endl;
+        o << "\tmovl" << instr->get_param(i) << "(%rbp), %" << registres[i - 1] << std::endl;
     }
-    o << "\tcall" << instr->get_param(0) <<std::endl;
+    o << "\tcall" << instr->get_param(0) << std::endl;
 }
 
 void BackendASM::instruction_cmp_eq(IRInstr* instr)

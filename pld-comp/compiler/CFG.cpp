@@ -72,21 +72,16 @@ std::string CFG::IR_reg_to_asm(std::string reg)
     return formatted;
 }
 
-void CFG::add_to_symbol_table(std::string name, Type t)
+void CFG::add_to_symbol_table(std::string name, Type t, int length)
 {
     if(SymbolType.count(name) == 0 && SymbolIndex.count(name) == 0)
     {
-
         SymbolType[name] = t;
-        if(t == Type::INT_64)
-        {
-            nextFreeSymbolIndex += 8;
-            SymbolIndex[name] = nextFreeSymbolIndex;
-        }
+        nextFreeSymbolIndex += IRInstr::get_type_size(t) * length;
+        SymbolIndex[name] = nextFreeSymbolIndex;
     }
     else
     {
-
         std::cout << "Error adding symbol already present" << std::endl;
     }
 }

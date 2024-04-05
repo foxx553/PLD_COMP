@@ -31,7 +31,7 @@ public:
     std::string IR_reg_to_asm(std::string reg); /**< helper method: inputs a IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
 
     // symbol table methods
-    void                         add_to_symbol_table(std::string name, Type t);
+    void                         add_to_symbol_table(std::string name, Type t, int length = 1);
     std::tuple<std::string, int> create_new_tempvar(Type t);
     int                          get_var_index(std::string name);
     Type                         get_var_type(std::string name);

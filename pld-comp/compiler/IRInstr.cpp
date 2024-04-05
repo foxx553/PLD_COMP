@@ -29,3 +29,8 @@ const std::vector<std::string>& IRInstr::get_params() const
 {
     return params;
 } 
+
+const Type IRInstr::get_type() const
+{
+    return t;
+}

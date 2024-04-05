@@ -15,6 +15,7 @@ public:
 
     virtual antlrcpp::Any visitFunction(ifccParser::FunctionContext* ctx) override;
     virtual antlrcpp::Any visitReturn_stmt(ifccParser::Return_stmtContext* ctx) override;
+    virtual antlrcpp::Any visitLvalue(ifccParser::LvalueContext* ctx) override;
     virtual antlrcpp::Any visitAssignation(ifccParser::AssignationContext* ctx) override;
     virtual antlrcpp::Any visitExprConstante(ifccParser::ExprConstanteContext* ctx) override;
     virtual antlrcpp::Any visitExprAddSub(ifccParser::ExprAddSubContext* ctx) override;
@@ -32,10 +33,11 @@ public:
     virtual antlrcpp::Any visitExprCmp(ifccParser::ExprCmpContext* ctx) override;
 
 private:
-    std::string pop_expression(CFG* graph);
+    std::string pop_expression();
     void reduce_not();
     void reduce_and();
     void reduce_or();
+    void reduce_assignation();
 
     int                     stack = 0;
     std::stack<std::string> expressions;

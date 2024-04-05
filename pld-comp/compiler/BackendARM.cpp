@@ -120,7 +120,7 @@ void BackendARM::instruction_wmem(IRInstr* instr)
   o << "\tstr x8, [sp, #" << instr->get_param(1) << "]" << std::endl;
 }
 
-void BackendASM::instruction_call(IRInstr* instr)
+void BackendARM::instruction_call(IRInstr* instr)
 {
     // TO-DO
     int nb_params = instr->get_params().size();

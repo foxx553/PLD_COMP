@@ -114,9 +114,9 @@ void BackendASM::instruction_call(IRInstr* instr)
 
     for(int i = 1; i < nb_params; i++)
     {
-        o << "\tmovl" << instr->get_param(i) << "(%rbp), %" << registres[i-1] << std::endl;
+        o << "\tmovl -" << instr->get_param(i) << "(%rbp), %" << registres[i-1] << std::endl;
     }
-    o << "\tcall" << instr->get_param(0) <<std::endl;
+    o << "\tcall " << instr->get_param(0) <<std::endl;
 }
 
 void BackendASM::instruction_cmp_eq(IRInstr* instr)

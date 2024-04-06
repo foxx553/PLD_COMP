@@ -19,7 +19,7 @@ void BackendASM::graph_begin(CFG* cfg)
     o << "\tpushq %rbp" << std::endl;
     o << "\tmovq %rsp, %rbp" << std::endl;
 
-    int size = ((cfg->get_total_size() - 1) | 15) + 1;
+    int size = ((cfg->get_symbol_offset() - 1) | 15) + 1;
     o << "\tsubq $" << size << ", %rsp" << std::endl;
 }
 
@@ -151,7 +151,7 @@ std::string BackendASM::symbol(const Symbol& symbol)
         {
             return "%rbp";
         }
-        else if(symbol.get_offset() != -1) // function parameter
+        else if(symbol.get_name() == "param") // function parameter
         {
             std::string params[] = {"rdi", "rsi", "rdx", "rcx", "r8d", "r9d"};
             return "%" + params[symbol.get_offset()];

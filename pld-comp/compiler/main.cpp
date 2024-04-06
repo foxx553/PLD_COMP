@@ -9,8 +9,8 @@
 #include "generated/ifccLexer.h"
 #include "generated/ifccParser.h"
 
-#include "Visitor.hpp"
 #include "BackendASM.hpp"
+#include "Visitor.hpp"
 
 using namespace antlr4;
 using namespace std;
@@ -27,7 +27,7 @@ int main(int argn, const char** argv)
 
         if(argn == 3)
         {
-            output = argv[2]; 
+            output = argv[2];
         }
     }
     else
@@ -54,14 +54,14 @@ int main(int argn, const char** argv)
 
     // on génère l'IR
     Visitor v;
-    v.visit(tree);     
-    
+    v.visit(tree);
+
     // on récupère l'IR
-    IR graphs = v.get_graphs(); 
+    IR graphs = v.get_graphs();
 
     // on génère le backend
     std::ofstream file(output);
-    BackendASM backend(graphs, output.empty() ? std::cout : file);
+    BackendASM    backend(graphs, output.empty() ? std::cout : file);
     backend.generate();
 
     return 0;

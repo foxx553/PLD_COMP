@@ -17,6 +17,7 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/ifccLexer.o \
 	build/ifccVisitor.o \
 	build/ifccParser.o \
+	build/Scope.o \
 	build/Symbol.o \
 	build/IRInstr.o \
 	build/BasicBlock.o \

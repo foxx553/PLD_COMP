@@ -2,6 +2,10 @@
 
 #include <iostream>
 
+Visitor::Visitor() : current_scope(nullptr)
+{
+}
+
 IR Visitor::get_graphs()
 {
     return graphs;
@@ -13,24 +17,54 @@ Visitor::~Visitor()
     {
         delete graph;
     }
+
+    for(auto scope: scopes)
+    {
+        delete scope;
+    }
+}
+
+antlrcpp::Any Visitor::visitProg(ifccParser::ProgContext* ctx)
+{
+    open_scope();
+    this->visitChildren(ctx);
+    close_scope();
+
+    return 0;
 }
 
 antlrcpp::Any Visitor::visitFunction(ifccParser::FunctionContext* ctx)
 {
-    auto name = ctx->IDENTIFIER()->getText();
+    graphs.push_back(new CFG(ctx->IDENTIFIER()->getText()));
 
-    auto graph = new CFG(name);
-    graphs.push_back(graph);
+    open_scope();
+
+    auto  graph = graphs.back();
+    auto* block = graph->current_bb;
 
     for(int i = 0; i < ctx->declaration().size(); ++i)
     {
         auto declaration = ctx->declaration()[i];
-        graph->add_symbol({declaration->IDENTIFIER()->getText(), Symbol::Nature::REGISTER, i});
+
+        auto type = Type::INT_64;
+        auto length = declaration->CONST() ? std::stoi(declaration->CONST()->getText()) : 1;
+        auto offset = graph->next_symbol_offset(type, length);
+
+        const auto& symbol = current_scope->add_symbol(offset, declaration->IDENTIFIER()->getText(), type, length);
+
+        if(i < 6)
+        {
+            block->add_instruction(Operation::copy, Type::INT_64, {symbol, {"param", Symbol::Nature::REGISTER, i}});
+        }
+
+        graph->add_param(symbol);
     }
 
     this->visit(ctx->block());
 
     graph->current_bb->exit_true = graph->end_bb;
+
+    close_scope();
 
     return 0;
 }
@@ -49,6 +83,10 @@ antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
     // exit
     block->exit_true = graph->end_bb;
 
+    auto garbage = new BasicBlock(graph);
+    graph->add_block(garbage);
+    graph->current_bb = garbage;
+
     return 0;
 }
 
@@ -57,7 +95,11 @@ antlrcpp::Any Visitor::visitDeclaration(ifccParser::DeclarationContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    const auto& symbol = graph->add_symbol(ctx->IDENTIFIER()->getText(), Type::INT_64, ctx->CONST() ? std::stoi(ctx->CONST()->getText()) : 1);
+    auto type = Type::INT_64;
+    auto length = ctx->CONST() ? std::stoi(ctx->CONST()->getText()) : 1;
+    auto offset = graph->next_symbol_offset(type, length);
+
+    const auto& symbol = current_scope->add_symbol(offset, ctx->IDENTIFIER()->getText(), type, length);
 
     if(ctx->expression())
     {
@@ -74,28 +116,30 @@ antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    auto identifier = graph->get_symbol(ctx->IDENTIFIER()->getText());
+    auto identifier = current_scope->get_symbol(ctx->IDENTIFIER()->getText());
 
-    if(identifier.get_nature() == Symbol::Nature::VARIABLE)
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
+    block->add_instruction(Operation::ldconst, Type::INT_64, {dest, {-identifier.get_offset()}});
+    block->add_instruction(Operation::add, Type::INT_64, {dest, {"bp", Symbol::Nature::REGISTER}, dest});
+
+    if(ctx->expression())
     {
-        auto dest = graph->create_temp(Type::INT_64);
-        block->add_instruction(Operation::ldconst, Type::INT_64, {dest, {-identifier.get_offset()}});
-        block->add_instruction(Operation::add, Type::INT_64, {dest, {"bp", Symbol::Nature::REGISTER}, dest});
+        this->visit(ctx->expression());
+        auto index = pop_symbol();
 
-        if(ctx->expression())
-        {
-            this->visit(ctx->expression());
-            auto index = pop_symbol();
-
-            block->add_instruction(Operation::add, Type::INT_64, {dest, index, dest});
-        }
-
-        symbols.push(dest);
+        block->add_instruction(Operation::add, Type::INT_64, {dest, index, dest});
     }
-    else if(identifier.get_nature() == Symbol::Nature::REGISTER)
-    {
-        symbols.push(identifier);
-    }
+
+    symbols.push(dest);
+
+    return 0;
+}
+
+antlrcpp::Any Visitor::visitBlock(ifccParser::BlockContext* ctx)
+{
+    open_scope();
+    this->visitChildren(ctx);
+    close_scope();
 
     return 0;
 }
@@ -120,7 +164,7 @@ antlrcpp::Any Visitor::visitExprConstante(ifccParser::ExprConstanteContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    auto dest = graph->create_temp(Type::INT_64);
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
     int  value = std::stoi(ctx->CONST()->getText());
 
     block->add_instruction(Operation::ldconst, Type::INT_64, {dest, {value}});
@@ -139,16 +183,9 @@ antlrcpp::Any Visitor::visitExprLvalue(ifccParser::ExprLvalueContext* ctx)
 
     auto value = pop_symbol();
 
-    if(value.get_nature() == Symbol::Nature::VARIABLE)
-    {
-        auto dest = graph->create_temp(Type::INT_64);
-        block->add_instruction(Operation::rmem, Type::INT_64, {dest, value});
-        symbols.push(dest);
-    }
-    else if(value.get_nature() == Symbol::Nature::REGISTER)
-    {
-        symbols.push(value);
-    }
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
+    block->add_instruction(Operation::rmem, Type::INT_64, {dest, value});
+    symbols.push(dest);
 
     return 0;
 }
@@ -163,7 +200,7 @@ antlrcpp::Any Visitor::visitExprAddSub(ifccParser::ExprAddSubContext* ctx)
     auto droite = pop_symbol();
     auto gauche = pop_symbol();
 
-    auto dest = graph->create_temp(Type::INT_64);
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
 
     block->add_instruction(ctx->ADD() ? Operation::add : Operation::sub, Type::INT_64, {dest, gauche, droite});
 
@@ -182,7 +219,7 @@ antlrcpp::Any Visitor::visitExprMultDiv(ifccParser::ExprMultDivContext* ctx)
     auto droite = pop_symbol();
     auto gauche = pop_symbol();
 
-    auto dest = graph->create_temp(Type::INT_64);
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
 
     block->add_instruction(ctx->MUL() ? Operation::mul : Operation::div, Type::INT_64, {dest, gauche, droite});
 
@@ -198,12 +235,12 @@ antlrcpp::Any Visitor::visitExprUnaire(ifccParser::ExprUnaireContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    auto facteur = graph->create_temp(Type::INT_64);
+    auto facteur = graph->create_temp(current_scope, Type::INT_64);
     block->add_instruction(Operation::ldconst, Type::INT_64, {facteur, {ctx->ADD() ? 1 : -1}});
 
     auto source = pop_symbol();
 
-    auto dest = graph->create_temp(Type::INT_64);
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
     block->add_instruction(Operation::mul, Type::INT_64, {dest, source, facteur});
 
     symbols.push(dest);
@@ -217,7 +254,9 @@ antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
     auto* block = graph->current_bb;
     auto  name = ctx->IDENTIFIER()->getText();
 
-    auto                dest = graph->create_temp(Type::INT_64);
+    // TO-DO : verifier nom existe
+
+    auto                dest = graph->create_temp(current_scope, Type::INT_64);
     std::vector<Symbol> parameters{{name, Symbol::Nature::NAME}, dest};
 
     for(int i = 0; i < ctx->expression().size(); i++)
@@ -243,7 +282,6 @@ antlrcpp::Any Visitor::visitLoop(ifccParser::LoopContext* ctx)
     graph->add_block(out_bb);
 
     // 'while' condition
-    auto expression = ctx->expression();
     auto condition_bb = new BasicBlock(graph);
     graph->add_block(condition_bb);
 
@@ -252,7 +290,7 @@ antlrcpp::Any Visitor::visitLoop(ifccParser::LoopContext* ctx)
 
     // Visiting the condition expression
     graph->current_bb = condition_bb;
-    this->visit(expression);
+    this->visit(ctx->expression());
     condition_bb = graph->current_bb; // on récupère le "bloc out" de l'expression
 
     condition_bb->test_symbol = pop_symbol();
@@ -294,9 +332,6 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
     // Following blocks
     for(int i = 0; i < ctx->expression().size(); i++)
     {
-        // 'if' condition
-        auto expression = ctx->expression()[i];
-
         auto condition_bb = new BasicBlock(graph);
         graph->add_block(condition_bb);
 
@@ -307,7 +342,7 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
         }
 
         graph->current_bb = condition_bb;
-        this->visit(expression);
+        this->visit(ctx->expression()[i]);
         condition_bb = graph->current_bb; // on récupère le "bloc out" de l'expression
 
         condition_bb->test_symbol = pop_symbol();
@@ -322,13 +357,13 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
         graph->add_block(block_bb);
         block_bb->exit_true = out_bb;
 
-        graph->current_bb = block_bb;
-        this->visit(ctx->block()[i]);
-        block_bb = graph->current_bb; // on récupère le "bloc out" du bloc
-
         // bb linking
         condition_bb->exit_true = block_bb;
         condition_bb->exit_false = out_bb;
+
+        graph->current_bb = block_bb;
+        this->visit(ctx->block()[i]);
+        block_bb = graph->current_bb; // on récupère le "bloc out" du bloc
 
         // last condition bb
         last_condition_bb = condition_bb;
@@ -337,15 +372,15 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
     // There's an 'else' block
     if(ctx->block().size() > ctx->expression().size())
     {
-        auto else_block = ctx->block()[ctx->expression().size()];
-
         auto else_bb = new BasicBlock(graph);
         graph->add_block(else_bb);
 
-        graph->current_bb = else_bb;
-        this->visit(else_block);
-
         last_condition_bb->exit_false = else_bb;
+
+        graph->current_bb = else_bb;
+        this->visit(ctx->block()[ctx->expression().size()]);
+        else_bb = graph->current_bb; // on récupère le "bloc out" du bloc
+
         else_bb->exit_true = out_bb;
     }
 
@@ -391,7 +426,7 @@ antlrcpp::Any Visitor::visitExprCmp(ifccParser::ExprCmpContext* ctx)
     auto* block = graph->current_bb;
 
     // Destination variable
-    auto dest = graph->create_temp(Type::INT_64);
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
 
     // Get results of left and right
     auto droite = pop_symbol();
@@ -426,7 +461,7 @@ antlrcpp::Any Visitor::visitExprCmp(ifccParser::ExprCmpContext* ctx)
         block->add_instruction(Operation::cmp_eq, Type::INT_64, cmp_params);
         symbols.push(dest);
 
-        auto second_dest = graph->create_temp(Type::INT_64);
+        auto second_dest = graph->create_temp(current_scope, Type::INT_64);
         block->add_instruction(Operation::cmp_lt, Type::INT_64, {second_dest, gauche, droite});
         symbols.push(second_dest);
 
@@ -437,7 +472,7 @@ antlrcpp::Any Visitor::visitExprCmp(ifccParser::ExprCmpContext* ctx)
         block->add_instruction(Operation::cmp_eq, Type::INT_64, cmp_params);
         symbols.push(dest);
 
-        auto second_dest = graph->create_temp(Type::INT_64);
+        auto second_dest = graph->create_temp(current_scope, Type::INT_64);
         block->add_instruction(Operation::cmp_lt, Type::INT_64, {second_dest, gauche, droite});
         symbols.push(second_dest);
 
@@ -463,7 +498,7 @@ void Visitor::reduce_and()
     auto gauche = pop_symbol();
 
     // Destination variable
-    auto dest = graph->create_temp(Type::INT_64);
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
 
     // True / false blocks
     auto true_bb = new BasicBlock(graph);
@@ -511,7 +546,7 @@ void Visitor::reduce_or()
     auto gauche = pop_symbol();
 
     // Destination variable
-    auto dest = graph->create_temp(Type::INT_64);
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
 
     // True / false blocks
     auto true_bb = new BasicBlock(graph);
@@ -558,7 +593,7 @@ void Visitor::reduce_not()
     auto value = pop_symbol();
 
     // Destination variable
-    auto dest = graph->create_temp(Type::INT_64);
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
 
     // True / false blocks
     auto true_bb = new BasicBlock(graph);
@@ -591,4 +626,16 @@ const Symbol& Visitor::pop_symbol()
     const auto& value = symbols.top();
     symbols.pop();
     return value;
+}
+
+void Visitor::open_scope()
+{
+    auto* scope = new Scope(current_scope);
+    scopes.push_back(scope);
+    current_scope = scope;
+}
+
+void Visitor::close_scope()
+{
+    current_scope = current_scope->get_parent();
 }

@@ -9,13 +9,16 @@
 class Visitor : public ifccBaseVisitor
 {
 public:
+    Visitor();
     virtual ~Visitor();
 
     IR get_graphs();
 
+    virtual antlrcpp::Any visitProg(ifccParser::ProgContext* ctx) override;
     virtual antlrcpp::Any visitFunction(ifccParser::FunctionContext* ctx) override;
     virtual antlrcpp::Any visitReturn_stmt(ifccParser::Return_stmtContext* ctx) override;
     virtual antlrcpp::Any visitLvalue(ifccParser::LvalueContext* ctx) override;
+    virtual antlrcpp::Any visitBlock(ifccParser::BlockContext* ctx) override;
     virtual antlrcpp::Any visitAssignation(ifccParser::AssignationContext* ctx) override;
     virtual antlrcpp::Any visitExprConstante(ifccParser::ExprConstanteContext* ctx) override;
     virtual antlrcpp::Any visitExprAddSub(ifccParser::ExprAddSubContext* ctx) override;
@@ -32,11 +35,15 @@ public:
     virtual antlrcpp::Any visitExprCmp(ifccParser::ExprCmpContext* ctx) override;
 
 private:
+    void          open_scope();
+    void          close_scope();
     const Symbol& pop_symbol();
     void          reduce_not();
     void          reduce_and();
     void          reduce_or();
 
-    std::stack<Symbol> symbols; ///< symboles pour la réduction
-    IR                 graphs;
+    Scope*              current_scope; ///< current scope
+    std::vector<Scope*> scopes;        ///< scopes
+    std::stack<Symbol>  symbols;       ///< symboles pour la réduction
+    IR                  graphs;        ///< graphs
 };

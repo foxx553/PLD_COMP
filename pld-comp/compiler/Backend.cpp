@@ -1,13 +1,11 @@
 #include "Backend.hpp"
 
-Backend::Backend(IR& ir, std::ostream& o): ir(ir), o(o) 
+Backend::Backend(IR& ir, std::ostream& o) : ir(ir), o(o)
 {
-
 }
 
 Backend::~Backend()
 {
-
 }
 
 void Backend::generate()

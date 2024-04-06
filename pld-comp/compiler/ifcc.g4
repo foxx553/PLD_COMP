@@ -2,10 +2,10 @@ grammar ifcc;
 
 axiom : prog EOF;
 
-prog : function*;
-function : 'int' IDENTIFIER '(' ('int' declaration (',' 'int' declaration)* )? ')' block;
+prog : (function | declare_stmt)*;
+function : (TYPE | 'void') IDENTIFIER '(' (TYPE declaration (',' TYPE declaration)* )? ')' block;
 
-instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt | loop | condition)+;
+instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt | loop | condition | block)*;
 
 block : '{' instruction '}';
 function_call : IDENTIFIER '(' (expression (',' expression)* )? ')';
@@ -29,10 +29,11 @@ expression: '(' expression ')'                          #exprPar
           ;
 
 return_stmt : RETURN expression ';';
-declare_stmt : 'int' declaration (',' declaration)* ';';
+declare_stmt : TYPE declaration (',' declaration)* ';';
 assign_stmt : assignation ';';
 call_stmt : function_call ';';
 
+TYPE: 'int' | 'char';
 ADD : '+';
 SUB: '-';
 MUL : '*';
@@ -51,4 +52,4 @@ CONST : [0-9]+;
 COMMENT : ('/*' .*? '*/' | '//' .*? '\n' ) -> skip;
 DIRECTIVE : '#' .*? '\n' -> skip;
 WS    : [ \t\r\n] -> channel(HIDDEN);
-IDENTIFIER : [a-zA-Z][a-zA-Z0-9]*;
+IDENTIFIER : [_a-zA-Z][_a-zA-Z0-9]*;

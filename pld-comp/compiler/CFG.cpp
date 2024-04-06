@@ -1,7 +1,7 @@
 #include "CFG.hpp"
 #include "BasicBlock.hpp"
 
-CFG::CFG(const std::string& name) : name(name), symbol_offset(0), block_offset(0), temp_offset(0)
+CFG::CFG(const std::string& name) : name(name), block_offset(0), symbol_offset(0), temp_offset(0)
 {
     begin_bb = new BasicBlock(this);
     end_bb = new BasicBlock(this);
@@ -35,59 +35,34 @@ void CFG::add_block(BasicBlock* bb)
     this->blocks.push_back(bb);
 }
 
-const Symbol& CFG::add_symbol(std::string name, Type type, int length)
-{
-    if(symbols.count(name) != 0)
-    {
-        throw std::invalid_argument("CFG::add_symbol: symbol already exists");
-    }
-
-    symbol_offset += Symbol::get_type_size(type) * length;
-    symbols[name] = {name, type, symbol_offset, length};
-
-    return symbols[name];
-}
-
-const Symbol& CFG::add_symbol(const Symbol& symbol)
-{
-    if(symbols.count(symbol.get_name()) != 0)
-    {
-        throw std::invalid_argument("CFG::add_symbol: symbol already exists");
-    }
-
-    symbols[symbol.get_name()] = symbol;
-    return symbol;
-}
-
-const Symbol& CFG::create_temp(Type type)
-{
-    auto name = "tmp" + std::to_string(temp_offset++);
-    return add_symbol(name, type);
-}
-
-const Symbol CFG::get_symbol(std::string name) const
-{
-    if(symbols.count(name) == 0)
-    {
-        throw std::invalid_argument("CFG::get_symbol: symbol doesn't exist");
-    }
-
-    return symbols.at(name);
-}
-
 std::string CFG::block_name()
 {
     return name + "_BB_" + std::to_string(block_offset++);
 }
 
-int CFG::get_total_size()
+const Symbol& CFG::create_temp(Scope* scope, Type type)
 {
-    int total = 0;
+    symbol_offset += Symbol::get_type_size(type);
+    return scope->create_temp(symbol_offset, temp_offset++, type);
+}
 
-    for(auto [name, symbol]: symbols)
-    {
-        total += symbol.get_size();
-    }
+int CFG::next_symbol_offset(Type type, int length)
+{
+    symbol_offset += Symbol::get_type_size(type) * length;
+    return symbol_offset;
+}
 
-    return total;
+int CFG::get_symbol_offset() const
+{
+    return symbol_offset;
+}
+
+void CFG::add_param(Symbol param)
+{
+    params.push_back(param);
+}
+
+std::vector<Symbol> CFG::get_params()
+{
+    return params;
 }

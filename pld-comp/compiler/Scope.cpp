@@ -1,8 +1,21 @@
 #include "Scope.hpp"
+
 #include <stdexcept>
+#include <iostream>
 
 Scope::Scope(Scope* parent) : parent(parent)
 {
+}
+
+Scope::~Scope()
+{
+    for(auto [name, used]: used_symbols)
+    {
+        if(used == false)
+        {
+            std::cerr << "Scope: variable " << name << " is not used" << std::endl;
+        }
+    }
 }
 
 const Symbol& Scope::add_symbol(int offset, std::string name, Type type, int length)
@@ -13,6 +26,7 @@ const Symbol& Scope::add_symbol(int offset, std::string name, Type type, int len
     }
 
     symbols[name] = {name, type, offset, length};
+    used_symbols[name] = false;
 
     return symbols[name];
 }
@@ -25,25 +39,30 @@ const Symbol& Scope::add_symbol(const Symbol& symbol)
     }
 
     symbols[symbol.get_name()] = symbol;
+    used_symbols[symbol.get_name()] = false;
+
     return symbol;
 }
 
 const Symbol& Scope::create_temp(int symbol_offset, int temp_offset, Type type)
 {
     auto name = "tmp_" + std::to_string(temp_offset);
-    return add_symbol(symbol_offset, name, type);
+    symbols[name] = {name, type, symbol_offset};
+
+    return symbols[name];
 }
 
-const Symbol Scope::get_symbol(std::string name) const
+const Symbol Scope::get_symbol(std::string name)
 {
     const Symbol* symbol = nullptr;
 
-    const Scope* current = this;
+    Scope* current = this;
     while(current != nullptr)
     {
         if(current->symbols.count(name) != 0)
         {
             symbol = &current->symbols.at(name);
+            current->used_symbols[name] = true;
             break;
         }
 

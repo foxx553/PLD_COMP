@@ -285,6 +285,9 @@ antlrcpp::Any Visitor::visitLoop(ifccParser::LoopContext* ctx)
     auto condition_bb = new BasicBlock(graph);
     graph->add_block(condition_bb);
 
+    // Register loop
+    loops.push(std::make_pair(condition_bb, out_bb));
+
     // Branching the previous block to the 'while' condition
     block->exit_true = condition_bb;
 
@@ -313,6 +316,9 @@ antlrcpp::Any Visitor::visitLoop(ifccParser::LoopContext* ctx)
 
     // Setting current bb to the out bb
     graph->current_bb = out_bb;
+
+    // Unregister loop
+    loops.pop();
 
     return 0;
 }
@@ -638,4 +644,46 @@ void Visitor::open_scope()
 void Visitor::close_scope()
 {
     current_scope = current_scope->get_parent();
+}
+
+antlrcpp::Any Visitor::visitBreak_stmt(ifccParser::Break_stmtContext* ctx)
+{
+    if(loops.empty())
+    {
+        throw std::invalid_argument("Visitor::visitBreak_stmt: no loop to break");
+    }
+
+    // Getting current CFG
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    // exit
+    block->exit_true = loops.top().second;
+
+    auto garbage = new BasicBlock(graph);
+    graph->add_block(garbage);
+    graph->current_bb = garbage;
+
+    return 0;
+}
+
+antlrcpp::Any Visitor::visitContinue_stmt(ifccParser::Continue_stmtContext* ctx)
+{
+    if(loops.empty())
+    {
+        throw std::invalid_argument("Visitor::visitContinue_stmt: no loop to continue");
+    }
+
+    // Getting current CFG
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    // exit
+    block->exit_true = loops.top().first;
+
+    auto garbage = new BasicBlock(graph);
+    graph->add_block(garbage);
+    graph->current_bb = garbage;
+
+    return 0;
 }

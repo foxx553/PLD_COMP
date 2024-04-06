@@ -33,6 +33,8 @@ public:
     virtual antlrcpp::Any visitExprOr(ifccParser::ExprOrContext* ctx) override;
     virtual antlrcpp::Any visitExprNot(ifccParser::ExprNotContext* ctx) override;
     virtual antlrcpp::Any visitExprCmp(ifccParser::ExprCmpContext* ctx) override;
+    virtual antlrcpp::Any visitBreak_stmt(ifccParser::Break_stmtContext* ctx) override;
+    virtual antlrcpp::Any visitContinue_stmt(ifccParser::Continue_stmtContext* ctx) override;
 
 private:
     void          open_scope();
@@ -42,8 +44,9 @@ private:
     void          reduce_and();
     void          reduce_or();
 
-    Scope*              current_scope; ///< current scope
-    std::vector<Scope*> scopes;        ///< scopes
-    std::stack<Symbol>  symbols;       ///< symboles pour la réduction
-    IR                  graphs;        ///< graphs
+    std::stack<std::pair<BasicBlock*, BasicBlock*>> loops;         ///< loop tree
+    Scope*                                          current_scope; ///< current scope
+    std::vector<Scope*>                             scopes;        ///< scopes
+    std::stack<Symbol>                              symbols;       ///< symboles pour la réduction
+    IR                                              graphs;        ///< graphs
 };

@@ -5,7 +5,7 @@ axiom : prog EOF;
 prog : (function | declare_stmt)*;
 function : (TYPE | 'void') IDENTIFIER '(' (TYPE declaration (',' TYPE declaration)* )? ')' block;
 
-instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt | loop | condition | block)*;
+instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt | loop | condition | block | break_stmt | continue_stmt)*;
 
 block : '{' instruction '}';
 function_call : IDENTIFIER '(' (expression (',' expression)* )? ')';
@@ -32,6 +32,8 @@ return_stmt : RETURN expression ';';
 declare_stmt : TYPE declaration (',' declaration)* ';';
 assign_stmt : assignation ';';
 call_stmt : function_call ';';
+break_stmt : 'break' ';';
+continue_stmt : 'continue' ';';
 
 TYPE: 'int' | 'char';
 ADD : '+';

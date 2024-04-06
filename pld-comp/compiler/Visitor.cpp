@@ -35,7 +35,8 @@ antlrcpp::Any Visitor::visitProg(ifccParser::ProgContext* ctx)
 
 antlrcpp::Any Visitor::visitFunction(ifccParser::FunctionContext* ctx)
 {
-    graphs.push_back(new CFG(ctx->IDENTIFIER()->getText()));
+    auto type = Symbol::type_from_string(ctx->VOID() ? ctx->VOID()->getText() : ctx->TYPE()[0]->getText());
+    graphs.push_back(new CFG(ctx->IDENTIFIER()->getText(), type));
 
     open_scope();
 
@@ -47,7 +48,7 @@ antlrcpp::Any Visitor::visitFunction(ifccParser::FunctionContext* ctx)
         auto declaration = ctx->declaration()[i];
 
         auto type = Type::INT_64;
-        auto length = declaration->CONST() ? std::stoi(declaration->CONST()->getText()) : 1;
+        auto length = declaration->constant() ? std::stoi(declaration->constant()->getText()) : 1;
         auto offset = graph->next_symbol_offset(type, length);
 
         const auto& symbol = current_scope->add_symbol(offset, declaration->IDENTIFIER()->getText(), type, length);
@@ -96,7 +97,7 @@ antlrcpp::Any Visitor::visitDeclaration(ifccParser::DeclarationContext* ctx)
     auto* block = graph->current_bb;
 
     auto type = Type::INT_64;
-    auto length = ctx->CONST() ? std::stoi(ctx->CONST()->getText()) : 1;
+    auto length = ctx->constant() ? std::stoi(ctx->constant()->getText()) : 1;
     auto offset = graph->next_symbol_offset(type, length);
 
     const auto& symbol = current_scope->add_symbol(offset, ctx->IDENTIFIER()->getText(), type, length);
@@ -165,7 +166,8 @@ antlrcpp::Any Visitor::visitExprConstante(ifccParser::ExprConstanteContext* ctx)
     auto* block = graph->current_bb;
 
     auto dest = graph->create_temp(current_scope, Type::INT_64);
-    int  value = std::stoi(ctx->CONST()->getText());
+
+    int value = ctx->constant()->NUMERIC() ? std::stoi(ctx->constant()->getText()) : static_cast<char>(ctx->constant()->getText()[1]);
 
     block->add_instruction(Operation::ldconst, Type::INT_64, {dest, {value}});
 
@@ -209,7 +211,7 @@ antlrcpp::Any Visitor::visitExprAddSub(ifccParser::ExprAddSubContext* ctx)
     return 0;
 }
 
-antlrcpp::Any Visitor::visitExprMultDiv(ifccParser::ExprMultDivContext* ctx)
+antlrcpp::Any Visitor::visitExprProduit(ifccParser::ExprProduitContext* ctx)
 {
     visitChildren(ctx);
 
@@ -221,7 +223,8 @@ antlrcpp::Any Visitor::visitExprMultDiv(ifccParser::ExprMultDivContext* ctx)
 
     auto dest = graph->create_temp(current_scope, Type::INT_64);
 
-    block->add_instruction(ctx->MUL() ? Operation::mul : Operation::div, Type::INT_64, {dest, gauche, droite});
+    auto operation = ctx->MUL() ? Operation::mul : (ctx->DIV() ? Operation::div : Operation::mod);
+    block->add_instruction(operation, Type::INT_64, {dest, gauche, droite});
 
     symbols.push(dest);
 
@@ -248,13 +251,51 @@ antlrcpp::Any Visitor::visitExprUnaire(ifccParser::ExprUnaireContext* ctx)
     return 0;
 }
 
+antlrcpp::Any Visitor::visitExprFunction(ifccParser::ExprFunctionContext* ctx)
+{
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+    auto  name = ctx->function_call()->IDENTIFIER()->getText();
+
+    auto target = find_graph(name);
+
+    int target_params;
+    if(!CFG::is_standard_function(name, target_params))
+    {
+        if(!target)
+        {
+            throw std::invalid_argument("Visitor::visitExprFunction: target function " + name + " doesn't exist");
+        }
+
+        if(target->get_type() == Type::VOID)
+        {
+            throw std::invalid_argument("Visitor::visitExprFunction: target function " + name + " returns void");
+        }
+    }
+
+    this->visitChildren(ctx);
+
+    return 0;
+}
+
 antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
 {
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
     auto  name = ctx->IDENTIFIER()->getText();
 
-    // TO-DO : verifier nom existe
+    auto target = find_graph(name);
+
+    int target_params;
+
+    if(target)
+    {
+        target_params = target->get_params().size();
+    }
+    else if(!CFG::is_standard_function(name, target_params))
+    {
+        throw std::invalid_argument("Visitor::visitExprFunction: target function " + name + " doesn't exist");
+    }
 
     auto                dest = graph->create_temp(current_scope, Type::INT_64);
     std::vector<Symbol> parameters{{name, Symbol::Nature::NAME}, dest};
@@ -263,6 +304,11 @@ antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
     {
         this->visit(ctx->expression()[i]);
         parameters.push_back(pop_symbol());
+    }
+
+    if(ctx->expression().size() != target_params)
+    {
+        throw std::invalid_argument("Visitor::visitExprFunction: target function " + name + " has " + std::to_string(target->get_params().size()) + " parameters (instead of " + std::to_string(target_params) + ")");
     }
 
     block->add_instruction(Operation::call, Type::INT_64, parameters);
@@ -686,4 +732,17 @@ antlrcpp::Any Visitor::visitContinue_stmt(ifccParser::Continue_stmtContext* ctx)
     graph->current_bb = garbage;
 
     return 0;
+}
+
+CFG* Visitor::find_graph(const std::string& name) const
+{
+    for(auto graph: graphs)
+    {
+        if(graph->get_name() == name)
+        {
+            return graph;
+        }
+    }
+
+    return nullptr;
 }

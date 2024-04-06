@@ -8,6 +8,7 @@ enum class Type
     INT_32,
     INT_16,
     INT_8,
+    VOID
 };
 
 class CFG;
@@ -35,7 +36,8 @@ public:
     const int          get_value() const;
     const Nature       get_nature() const;
 
-    static const int get_type_size(Type t);
+    static const int  get_type_size(Type t);
+    static const Type type_from_string(const std::string& type);
 
 private:
     Type        type;

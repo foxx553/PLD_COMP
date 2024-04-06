@@ -64,3 +64,21 @@ const int Symbol::get_type_size(Type type)
         return 1;
     }
 }
+
+const Type Symbol::type_from_string(const std::string& type)
+{
+    if(type == "int")
+    {
+        return Type::INT_64;
+    }
+    else if(type == "char")
+    {
+        return Type::INT_8;
+    }
+    else if(type == "void")
+    {
+        return Type::VOID;
+    }
+
+    return Type::INT_64;
+}

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ostream>
 #include "CFG.hpp"
+#include <ostream>
 
-class Backend 
+class Backend
 {
 public:
     Backend(IR& ir, std::ostream& o);
@@ -28,6 +28,7 @@ protected:
     virtual void instruction_sub(IRInstr* instr) = 0;
     virtual void instruction_mul(IRInstr* instr) = 0;
     virtual void instruction_div(IRInstr* instr) = 0;
+    virtual void instruction_mod(IRInstr* instr) = 0;
     virtual void instruction_ret(IRInstr* instr) = 0;
     virtual void instruction_rmem(IRInstr* instr) = 0;
     virtual void instruction_wmem(IRInstr* instr) = 0;
@@ -35,6 +36,6 @@ protected:
     virtual void instruction_cmp_eq(IRInstr* instr) = 0;
     virtual void instruction_cmp_lt(IRInstr* instr) = 0;
 
-    IR& ir;
+    IR&           ir;
     std::ostream& o;
 };

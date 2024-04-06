@@ -73,6 +73,9 @@ void Backend::instruction(IRInstr* instr)
     case Operation::div:
         instruction_div(instr);
         break;
+    case Operation::mod:
+        instruction_mod(instr);
+        break;
     case Operation::ret:
         instruction_ret(instr);
         break;

@@ -19,7 +19,7 @@ typedef std::vector<CFG*> IR;
 class CFG
 {
 public:
-    CFG(const std::string& name);
+    CFG(const std::string& name, Type type);
     virtual ~CFG();
 
     const std::string&  get_name() const;
@@ -27,7 +27,10 @@ public:
     int                 get_symbol_offset() const;
     const Symbol&       create_temp(Scope* scope, Type type);
     void                add_param(Symbol param);
-    std::vector<Symbol> get_params();
+    std::vector<Symbol> get_params() const;
+    const Type          get_type() const;
+
+    static bool is_standard_function(const std::string& name, int& params);
 
     // basic block management
     const std::vector<BasicBlock*>& get_blocks() const;
@@ -44,4 +47,5 @@ protected:
     int                      block_offset;  ///< basic block offset : for name
     int                      symbol_offset; ///< symbol offset : for index
     int                      temp_offset;   ///< tmp offset : for name
+    Type                     type;          ///< return type
 };

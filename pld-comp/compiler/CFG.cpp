@@ -1,7 +1,7 @@
 #include "CFG.hpp"
 #include "BasicBlock.hpp"
 
-CFG::CFG(const std::string& name) : name(name), block_offset(0), symbol_offset(0), temp_offset(0)
+CFG::CFG(const std::string& name, Type type) : name(name), type(type), block_offset(0), symbol_offset(0), temp_offset(0)
 {
     begin_bb = new BasicBlock(this);
     end_bb = new BasicBlock(this);
@@ -62,7 +62,28 @@ void CFG::add_param(Symbol param)
     params.push_back(param);
 }
 
-std::vector<Symbol> CFG::get_params()
+std::vector<Symbol> CFG::get_params() const
 {
     return params;
+}
+
+const Type CFG::get_type() const
+{
+    return type;
+}
+
+bool CFG::is_standard_function(const std::string& name, int& params)
+{
+    std::array<std::pair<std::string, int>, 2> functions = {std::make_pair("putchar", 1), std::make_pair("getchar", 0)};
+
+    for(auto [label, count]: functions)
+    {
+        if(label == name)
+        {
+            params = count;
+            return true;
+        }
+    }
+
+    return false;
 }

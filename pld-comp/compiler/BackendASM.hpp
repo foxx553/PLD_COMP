@@ -21,6 +21,7 @@ private:
     void instruction_sub(IRInstr* instr);
     void instruction_mul(IRInstr* instr);
     void instruction_div(IRInstr* instr);
+    void instruction_mod(IRInstr* instr);
     void instruction_ret(IRInstr* instr);
     void instruction_rmem(IRInstr* instr);
     void instruction_wmem(IRInstr* instr);

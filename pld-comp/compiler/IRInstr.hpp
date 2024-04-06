@@ -20,6 +20,7 @@ enum class Operation
     sub,     // x - y
     mul,     // x * y
     div,     // x / y
+    mod,     // x % y
     rmem,    // a = *b
     wmem,    // *b = a
     call,    // fct()

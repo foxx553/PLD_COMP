@@ -23,9 +23,10 @@ public:
     virtual antlrcpp::Any visitExprConstante(ifccParser::ExprConstanteContext* ctx) override;
     virtual antlrcpp::Any visitExprAddSub(ifccParser::ExprAddSubContext* ctx) override;
     virtual antlrcpp::Any visitExprLvalue(ifccParser::ExprLvalueContext* ctx) override;
-    virtual antlrcpp::Any visitExprMultDiv(ifccParser::ExprMultDivContext* ctx) override;
+    virtual antlrcpp::Any visitExprProduit(ifccParser::ExprProduitContext* ctx) override;
     virtual antlrcpp::Any visitExprUnaire(ifccParser::ExprUnaireContext* ctx) override;
     virtual antlrcpp::Any visitFunction_call(ifccParser::Function_callContext* ctx) override;
+    virtual antlrcpp::Any visitExprFunction(ifccParser::ExprFunctionContext* ctx) override;
     virtual antlrcpp::Any visitDeclaration(ifccParser::DeclarationContext* ctx) override;
     virtual antlrcpp::Any visitLoop(ifccParser::LoopContext* ctx) override;
     virtual antlrcpp::Any visitCondition(ifccParser::ConditionContext* ctx) override;
@@ -43,6 +44,7 @@ private:
     void          reduce_not();
     void          reduce_and();
     void          reduce_or();
+    CFG*          find_graph(const std::string& name) const;
 
     std::stack<std::pair<BasicBlock*, BasicBlock*>> loops;         ///< loop tree
     Scope*                                          current_scope; ///< current scope

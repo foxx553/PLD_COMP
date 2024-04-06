@@ -89,6 +89,14 @@ void BackendASM::instruction_div(IRInstr* instr)
     o << "\tmovl %eax, " << symbol(instr->get_param(0)) << std::endl;
 }
 
+void BackendASM::instruction_mod(IRInstr* instr)
+{
+    o << "\tmovl " << symbol(instr->get_param(1)) << ", %eax" << std::endl;
+    o << "\tmovl " << symbol(instr->get_param(2)) << ", %ecx" << std::endl;
+    o << "\tcltd\n\tidivl %ecx" << std::endl;
+    o << "\tmovl %edx, " << symbol(instr->get_param(0)) << std::endl;
+}
+
 void BackendASM::instruction_ret(IRInstr* instr)
 {
     o << "\tmovq " << symbol(instr->get_param(0)) << ", %rax" << std::endl;

@@ -188,16 +188,27 @@ antlrcpp::Any Visitor::visitExprUnaire(ifccParser::ExprUnaireContext* ctx)
     return 0;
 }
 
-antlrcpp::Any Visitor::visitCall_stmt(ifccParser::Call_stmtContext* ctx)
-{
-    return 0;
-}
-
 antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
 {
+  
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+    auto name = ctx->IDENTIFIER()->getText();
+    std::vector<std::string> parameters;
+    parameters.push_back(name);
+
+    for(int i = 0; i < ctx->expression().size(); i++)
+    {
+        this->visit(ctx->expression()[i]);
+                
+        parameters.push_back(std::to_string(graph->get_var_index(pop_expression())));
+    }
+    
+  
+    block->add_IRInstr(Operation::call, Type::INT_64, parameters);
+      
     return 0;
 }
-
 antlrcpp::Any Visitor::visitLoop(ifccParser::LoopContext* ctx)
 {
     // Getting current CFG

@@ -27,7 +27,4 @@ private:
     void instruction_call(IRInstr* instr);
     void instruction_cmp_eq(IRInstr* instr);
     void instruction_cmp_lt(IRInstr* instr);
-    void instruction_cmp_le(IRInstr* instr);
-    void instruction_cmp_lt_eq(IRInstr* instr);
-    void instruction_cmp_le_eq(IRInstr* instr);
 };

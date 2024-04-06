@@ -19,17 +19,21 @@ void BackendARM::graph_begin(CFG* cfg)
     o << std::endl << "_" << cfg->get_name() << ":                                  ; @" << cfg->get_name() << std::endl;
     o << "\t.cfi_startproc" << std::endl;
     o << "; %bb.0:" << std::endl;
-    o << "\tsub	sp, sp, #16" << std::endl;
-    o << "\t.cfi_def_cfa_offset 16" << std::endl;
-    o << "\tstr	wzr, [sp, #12]" << std::endl;
+    o << "\tsub	sp, sp, #32" << std::endl;
+    o << "\tstp	x29, x30, [sp, #504]" << std::endl;
+    o << "\tadd	x29, sp, #504" << std::endl;
+    // o << "\t.cfi_def_cfa_offset 32" << std::endl;
+    o << "\tstr	w8, [sp, #4]" << std::endl;
+    o << "\tstur    wzr, [x29, #-4]" << std::endl;
+    
     o << "\tb .main_BB_0" << std::endl;
 }
 
 void BackendARM::graph_end(CFG* cfg)
 {
-    
-    o << "\t# epilogue" << std::endl;
-    o << "\tadd	sp, sp, #16" << std::endl;
+    o << "\t; epilogue" << std::endl;
+    o << "\tldp x29, x30, [sp, #504]" << std::endl;
+    o << "\tadd	sp, sp, #32" << std::endl;
     o << "\tret" << std::endl;
     o << "\t.cfi_endproc" << std::endl;
     o << "\t\t\t\t\t\t\t\t\t\t; -- End function" << std::endl;
@@ -42,10 +46,11 @@ void BackendARM::block_begin(BasicBlock* bb)
 
 void BackendARM::block_jump_conditional(BasicBlock* bb)
 {
-    int index = bb->get_graph()->get_index(bb->test_var_name);
-    o << "\tldr w" << index << ", [" << "sp, #" << index << "]" << std::endl;
-    o << "\tcbnz w" << index << ", ." << bb->exit_true->get_name() << std::endl;
-    o << "\tb ." << bb->exit_false->get_name() << std::endl;
+    // int index = bb->get_graph()->get_index(bb->test_var_name);
+    // o << "\tldr w8, [sp, #" << index << "]" << std::endl;
+    // o << "\tcmp w8, #0" << std::endl; 
+    o << "\tcbnz w8, ." << bb->exit_false->get_name() << std::endl; 
+    o << "\tb ." << bb->exit_true->get_name() << std::endl; 
 }
 
 void BackendARM::block_jump_simple(BasicBlock* bb)
@@ -61,132 +66,96 @@ void BackendARM::instruction_ldconst(IRInstr* instr)
 
 void BackendARM::instruction_copy(IRInstr* instr)
 {
+    // std::cout << "instruction_copy" <<std::endl;
     o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
     o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_add(IRInstr* instr)
 {
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tadd w" << instr->get_param(0) << ", w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    // std::cout << "instruction_add" <<std::endl;
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w2, [sp, #" << instr->get_param(2) << "]" << std::endl;
+    o << "\tadd w8, w8, w2" << std::endl;
+    o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_sub(IRInstr* instr)
 {
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tsub w" << instr->get_param(0) << ", w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    // std::cout << "instruction_add" <<std::endl;
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w2, [sp, #" << instr->get_param(2) << "]" << std::endl;
+    o << "\tsub w8, w8, w2" << std::endl;
+    o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_mul(IRInstr* instr)
 {
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tmul w" << instr->get_param(0) << ", w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w2, [sp, #" << instr->get_param(2) << "]" << std::endl;
+    o << "\tmul w8, w8, w2" << std::endl;
+    o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_div(IRInstr* instr)
 {
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tsdiv w" << instr->get_param(0) << ", w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w2, [sp, #" << instr->get_param(2) << "]" << std::endl;
+    o << "\tsdiv w8, w8, w2" << std::endl;
+    o << "\tstr w8, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_ret(IRInstr* instr)
 {
+//    std::cout << "instruction_ret" <<std::endl;
    o << "\tldr w0, [sp, #" << instr->get_param(0) << "]" << std::endl;
 }
 
 void BackendARM::instruction_rmem(IRInstr* instr)
 {
-    o << "\tldr x" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tldr w" << instr->get_param(0) << ", [x" << instr->get_param(0) << "]" << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+ 
+    o << "\tadd x8, sp, #"  << instr->get_param(0) << std::endl;
+    
 }
 
 void BackendARM::instruction_wmem(IRInstr* instr)
 {
-    o << "\tldr x" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [x" << instr->get_param(0) << "]" << std::endl;
+  o << "\tadd x8, sp, #"  << instr->get_param(0) << std::endl;
+  o << "\tstr x8, [sp, #" << instr->get_param(1) << "]" << std::endl;
 }
 
 void BackendARM::instruction_call(IRInstr* instr)
 {
     // TO-DO
     int nb_params = instr->get_params().size();
+    std::string registres[] = {"w8", "w2", "w3", "w4"};
 
-    for (int i = 0; i < nb_params; i++) {
-
-        switch (i)
-        {
-            case 0:
-                break;
-            case 1:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-                break;
-            case 2:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-                break;
-            case 3:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-                break;
-            case 4:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-                break;
-            case 5:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-                break;
-            case 6:
-                o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-                break;
-        }
+    for(int i = 1; i < nb_params && i < 4; i++)
+    {
+        o << "\tldr " << registres[i-1] << ", [sp, #" << instr->get_param(i) << "]" << std::endl;
     }
-
+    o << "\tbl _" << instr->get_param(0) << std::endl;
 }
+
+    
+void BackendARM::instruction_cmp_lt(IRInstr* instr)
+{
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w9, [sp, #" << instr->get_param(2) << "]" << std::endl;
+    o << "\tsubs w8, w8, w9" << std::endl;
+    o << "\tcset w8, ge" << std::endl;
+}
+
 
 void BackendARM::instruction_cmp_eq(IRInstr* instr)
 {
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tcmp w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tsete w" << instr->get_param(0) << std::endl;
-    o << "\tmovz w" << instr->get_param(0) << ", #0" << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
+    // std::cout << "instruction_cmp_lt_eq" <<std::endl;
+    o << "\tldr w8, [sp, #" << instr->get_param(1) << "]" << std::endl;
+    o << "\tldr w9, [sp, #" << instr->get_param(2) << "]" << std::endl;
+    o << "\tsubs w8, w8, w9" << std::endl;
+    o << "\tcset w8, ne" << std::endl;
 }
 
-void BackendARM::instruction_cmp_lt(IRInstr* instr)
-{
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tcmp w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tsetl w" << instr->get_param(0) << std::endl;
-    o << "\tmovz w" << instr->get_param(0) << ", #0" << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-}
 
-void BackendARM::instruction_cmp_lt_eq(IRInstr* instr)
-{
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tcmp w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tsetle w" << instr->get_param(0) << std::endl;
-    o << "\tmovz w" << instr->get_param(0) << ", #0" << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-}
 
-void BackendARM::instruction_cmp_le(IRInstr* instr)
-{
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tcmp w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tsetg w" << instr->get_param(0) << std::endl;
-    o << "\tmovz w" << instr->get_param(0) << ", #0" << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-}
 
-void BackendARM::instruction_cmp_le_eq(IRInstr* instr)
-{
-    o << "\tldr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-    o << "\tcmp w" << instr->get_param(0) << ", w" << instr->get_param(2) << std::endl;
-    o << "\tsetge w" << instr->get_param(0) << std::endl;
-    o << "\tmovz w" << instr->get_param(0) << ", #0" << std::endl;
-    o << "\tstr w" << instr->get_param(0) << ", [sp, #" << instr->get_param(1) << "]" << std::endl;
-}

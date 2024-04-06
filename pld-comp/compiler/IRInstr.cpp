@@ -1,21 +1,10 @@
 #include "IRInstr.hpp"
 
-IRInstr::IRInstr(BasicBlock* bb_, Operation op, Type t, std::vector<std::string> params)
+IRInstr::IRInstr(BasicBlock* block, Operation op, Type type, const std::vector<Symbol>& params) : block(block), op(op), type(type), params(params)
 {
-    this->params = params;
-    this->op = op;
-    this->bb = bb_;
-    this->t = t;
 }
 
-IRInstr::IRInstr(Operation op, Type t, std::vector<std::string> params)
-{
-    this->params = params;
-    this->op = op;
-    this->t = t;
-}
-
-const std::string& IRInstr::get_param(int i) const
+const Symbol& IRInstr::get_param(int i) const
 {
     return params[i];
 }
@@ -25,12 +14,12 @@ const Operation IRInstr::get_operation() const
     return op;
 }
 
-const std::vector<std::string>& IRInstr::get_params() const
+const std::vector<Symbol>& IRInstr::get_params() const
 {
     return params;
-} 
+}
 
 const Type IRInstr::get_type() const
 {
-    return t;
+    return type;
 }

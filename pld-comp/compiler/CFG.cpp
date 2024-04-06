@@ -1,10 +1,10 @@
 #include "CFG.hpp"
 #include "BasicBlock.hpp"
 
-CFG::CFG(const std::string& name) : name(name), nextFreeSymbolIndex(0), nextBBnumber(0), nextTempIndex(0)
+CFG::CFG(const std::string& name) : name(name), symbol_offset(0), block_offset(0), temp_offset(0)
 {
-    begin_bb = new BasicBlock(this, new_BB_name());
-    end_bb = new BasicBlock(this, new_BB_name());
+    begin_bb = new BasicBlock(this);
+    end_bb = new BasicBlock(this);
 
     current_bb = begin_bb;
 
@@ -30,100 +30,64 @@ const std::vector<BasicBlock*>& CFG::get_blocks() const
     return blocks;
 }
 
-const int CFG::get_index(const std::string& name) const
-{
-    if(SymbolType.count(name) == 0 && SymbolIndex.count(name) == 0)
-    {
-
-        std::cerr << "Error symbol does not present" << std::endl;
-        return -1;
-    }
-    else
-    {
-        return SymbolIndex.at(name);
-    }
-}
-
-const Type CFG::get_type(const std::string& name) const
-{
-    if(SymbolType.count(name) == 0 && SymbolIndex.count(name) == 0)
-    {
-        std::cout << "Error symbol does not present" << std::endl;
-        // to do : throw an exception
-    }
-    else
-    {
-        return SymbolType.at(name);
-    }
-
-    return Type::INT_64;
-}
-
-void CFG::add_bb(BasicBlock* bb)
+void CFG::add_block(BasicBlock* bb)
 {
     this->blocks.push_back(bb);
 }
 
-std::string CFG::IR_reg_to_asm(std::string reg)
+const Symbol& CFG::add_symbol(std::string name, Type type, int length)
 {
-    // Todo : team asm :
-    /**< helper method: inputs a IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
-    std::string formatted = "-" + reg + "(%rbp)";
-    return formatted;
+    if(symbols.count(name) != 0)
+    {
+        throw std::invalid_argument("CFG::add_symbol: symbol already exists");
+    }
+
+    symbol_offset += Symbol::get_type_size(type) * length;
+    symbols[name] = {name, type, symbol_offset, length};
+
+    return symbols[name];
 }
 
-void CFG::add_to_symbol_table(std::string name, Type t, int length)
+const Symbol& CFG::add_symbol(const Symbol& symbol)
 {
-    if(SymbolType.count(name) == 0 && SymbolIndex.count(name) == 0)
+    if(symbols.count(symbol.get_name()) != 0)
     {
-        SymbolType[name] = t;
-        nextFreeSymbolIndex += IRInstr::get_type_size(t) * length;
-        SymbolIndex[name] = nextFreeSymbolIndex;
+        throw std::invalid_argument("CFG::add_symbol: symbol already exists");
     }
-    else
-    {
-        std::cout << "Error adding symbol already present" << std::endl;
-    }
+
+    symbols[symbol.get_name()] = symbol;
+    return symbol;
 }
 
-std::tuple<std::string, int> CFG::create_new_tempvar(Type t)
+const Symbol& CFG::create_temp(Type type)
 {
-    auto name = "tmp" + std::to_string(nextTempIndex++);
-    add_to_symbol_table(name, t);
-    return {name, get_var_index(name)};
+    auto name = "tmp" + std::to_string(temp_offset++);
+    return add_symbol(name, type);
 }
 
-int CFG::get_var_index(std::string name)
+const Symbol CFG::get_symbol(std::string name) const
 {
-    if(SymbolType.count(name) == 0 && SymbolIndex.count(name) == 0)
+    if(symbols.count(name) == 0)
     {
-
-        std::cerr << "Error symbol does not present" << std::endl;
-        return -1;
+        throw std::invalid_argument("CFG::get_symbol: symbol doesn't exist");
     }
-    else
-    {
 
-        return SymbolIndex[name];
-    }
+    return symbols.at(name);
 }
 
-Type CFG::get_var_type(std::string name)
+std::string CFG::block_name()
 {
-    if(SymbolType.count(name) == 0 && SymbolIndex.count(name) == 0)
-    {
-        std::cout << "Error symbol does not present" << std::endl;
-        // to do : throw an exception
-    }
-    else
-    {
-        return SymbolType[name];
-    }
-
-    return Type::INT_64;
+    return name + "_BB_" + std::to_string(block_offset++);
 }
 
-std::string CFG::new_BB_name()
+int CFG::get_total_size()
 {
-    return name + "_BB_" + std::to_string(nextBBnumber++);
+    int total = 0;
+
+    for(auto [name, symbol]: symbols)
+    {
+        total += symbol.get_size();
+    }
+
+    return total;
 }

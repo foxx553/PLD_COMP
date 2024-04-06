@@ -14,7 +14,7 @@ private:
     void graph_end(CFG* cfg);
     void block_jump_conditional(BasicBlock* bb);
     void block_jump_simple(BasicBlock* bb);
-    void block_begin(BasicBlock* bb); 
+    void block_begin(BasicBlock* bb);
     void instruction_ldconst(IRInstr* instr);
     void instruction_copy(IRInstr* instr);
     void instruction_add(IRInstr* instr);
@@ -27,4 +27,6 @@ private:
     void instruction_call(IRInstr* instr);
     void instruction_cmp_eq(IRInstr* instr);
     void instruction_cmp_lt(IRInstr* instr);
+
+    std::string symbol(const Symbol& symbol);
 };

@@ -3,17 +3,17 @@ grammar ifcc;
 axiom : prog EOF;
 
 prog : function*;
-function : 'int' IDENTIFIER '(' ('int' IDENTIFIER (',' 'int' IDENTIFIER)* )? ')' block;
+function : 'int' IDENTIFIER '(' ('int' declaration (',' 'int' declaration)* )? ')' block;
 
 instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt | loop | condition)+;
 
 block : '{' instruction '}';
 function_call : IDENTIFIER '(' (expression (',' expression)* )? ')';
 assignation : lvalue '=' expression;
-declaration : IDENTIFIER ('=' expression | '[' CONST ']')?; 
+declaration : IDENTIFIER ('[' CONST ']' | '=' expression)?;
 loop : 'while' '(' expression ')' block;
 condition : 'if' '(' expression ')' block ('else if' '(' expression ')' block)* ('else' block)?;
-lvalue : IDENTIFIER ('[' expression ']')? | '*'? IDENTIFIER;
+lvalue : IDENTIFIER ('[' expression ']')?;
 
 expression: '(' expression ')'                          #exprPar
           | NOT expression                              #exprNot
@@ -23,7 +23,7 @@ expression: '(' expression ')'                          #exprPar
           | (SUB|ADD) expression                        #exprUnaire
           | expression (MUL|DIV) expression             #exprMultDiv
           | expression (ADD|SUB) expression             #exprAddSub
-          | IDENTIFIER                                  #exprVariable
+          | lvalue                                      #exprLvalue
           | CONST                                       #exprConstante
           | function_call                               #exprFunction
           ;

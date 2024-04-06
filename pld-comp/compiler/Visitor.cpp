@@ -17,14 +17,20 @@ Visitor::~Visitor()
 
 antlrcpp::Any Visitor::visitFunction(ifccParser::FunctionContext* ctx)
 {
-    auto name = ctx->IDENTIFIER()[0]->getText();
+    auto name = ctx->IDENTIFIER()->getText();
 
-    auto current_CFG = new CFG(name);
+    auto graph = new CFG(name);
+    graphs.push_back(graph);
 
-    graphs.push_back(current_CFG);
-    this->visitChildren(ctx);
+    for(int i = 0; i < ctx->declaration().size(); ++i)
+    {
+        auto declaration = ctx->declaration()[i];
+        graph->add_symbol({declaration->IDENTIFIER()->getText(), Symbol::Nature::REGISTER, i});
+    }
 
-    current_CFG->current_bb->exit_true = current_CFG->end_bb;
+    this->visit(ctx->block());
+
+    graph->current_bb->exit_true = graph->end_bb;
 
     return 0;
 }
@@ -36,9 +42,9 @@ antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    auto dest_idx = graph->get_var_index(pop_expression());
+    auto dest = pop_symbol();
 
-    block->add_IRInstr(Operation::ret, Type::INT_64, {std::to_string(dest_idx)});
+    block->add_instruction(Operation::ret, Type::INT_64, {dest});
 
     // exit
     block->exit_true = graph->end_bb;
@@ -51,18 +57,13 @@ antlrcpp::Any Visitor::visitDeclaration(ifccParser::DeclarationContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    graph->add_to_symbol_table(ctx->IDENTIFIER()->getText(), Type::INT_64, ctx->CONST() ? std::stoi(ctx->CONST()->getText()) : 1);
+    const auto& symbol = graph->add_symbol(ctx->IDENTIFIER()->getText(), Type::INT_64, ctx->CONST() ? std::stoi(ctx->CONST()->getText()) : 1);
 
     if(ctx->expression())
     {
-        expressions.push(ctx->IDENTIFIER()->getText());
-        
-        auto [offset_name, offset_idx] = graph->create_new_tempvar(Type::INT_64);
-        block->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(offset_idx), "0"});
-        expressions.push(offset_name);
-
         this->visit(ctx->expression());
-        reduce_assignation();
+        auto expression = pop_symbol();
+        block->add_instruction(Operation::copy, Type::INT_64, {symbol, expression});
     }
 
     return 0;
@@ -73,17 +74,27 @@ antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    expressions.push(ctx->IDENTIFIER()->getText());
+    auto identifier = graph->get_symbol(ctx->IDENTIFIER()->getText());
 
-    if(ctx->expression())
+    if(identifier.get_nature() == Symbol::Nature::VARIABLE)
     {
-        this->visit(ctx->expression());
+        auto dest = graph->create_temp(Type::INT_64);
+        block->add_instruction(Operation::ldconst, Type::INT_64, {dest, {-identifier.get_offset()}});
+        block->add_instruction(Operation::add, Type::INT_64, {dest, {"bp", Symbol::Nature::REGISTER}, dest});
+
+        if(ctx->expression())
+        {
+            this->visit(ctx->expression());
+            auto index = pop_symbol();
+
+            block->add_instruction(Operation::add, Type::INT_64, {dest, index, dest});
+        }
+
+        symbols.push(dest);
     }
-    else
+    else if(identifier.get_nature() == Symbol::Nature::REGISTER)
     {
-        auto [offset_name, offset_idx] = graph->create_new_tempvar(Type::INT_64);
-        block->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(offset_idx), "0"});
-        expressions.push(offset_name);
+        symbols.push(identifier);
     }
 
     return 0;
@@ -93,7 +104,13 @@ antlrcpp::Any Visitor::visitAssignation(ifccParser::AssignationContext* ctx)
 {
     this->visitChildren(ctx);
 
-    reduce_assignation();
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    auto right = pop_symbol();
+    auto left = pop_symbol();
+
+    block->add_instruction(Operation::wmem, Type::INT_64, {left, right});
 
     return 0;
 }
@@ -103,12 +120,35 @@ antlrcpp::Any Visitor::visitExprConstante(ifccParser::ExprConstanteContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    auto [dest_name, dest_idx] = graph->create_new_tempvar(Type::INT_64);
-    int value = std::stoi(ctx->CONST()->getText());
+    auto dest = graph->create_temp(Type::INT_64);
+    int  value = std::stoi(ctx->CONST()->getText());
 
-    block->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(dest_idx), std::to_string(value)});
+    block->add_instruction(Operation::ldconst, Type::INT_64, {dest, {value}});
 
-    expressions.push(dest_name);
+    symbols.push(dest);
+
+    return 0;
+}
+
+antlrcpp::Any Visitor::visitExprLvalue(ifccParser::ExprLvalueContext* ctx)
+{
+    visitChildren(ctx);
+
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    auto value = pop_symbol();
+
+    if(value.get_nature() == Symbol::Nature::VARIABLE)
+    {
+        auto dest = graph->create_temp(Type::INT_64);
+        block->add_instruction(Operation::rmem, Type::INT_64, {dest, value});
+        symbols.push(dest);
+    }
+    else if(value.get_nature() == Symbol::Nature::REGISTER)
+    {
+        symbols.push(value);
+    }
 
     return 0;
 }
@@ -120,15 +160,14 @@ antlrcpp::Any Visitor::visitExprAddSub(ifccParser::ExprAddSubContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    auto droite = graph->get_var_index(pop_expression());
-    auto gauche = graph->get_var_index(pop_expression());
+    auto droite = pop_symbol();
+    auto gauche = pop_symbol();
 
-    auto [dest_name, dest_idx] = graph->create_new_tempvar(Type::INT_64);
+    auto dest = graph->create_temp(Type::INT_64);
 
-    std::vector<std::string> params{std::to_string(dest_idx), std::to_string(gauche), std::to_string(droite)};
-    block->add_IRInstr(ctx->ADD() ? Operation::add : Operation::sub, Type::INT_64, params);
+    block->add_instruction(ctx->ADD() ? Operation::add : Operation::sub, Type::INT_64, {dest, gauche, droite});
 
-    expressions.push(dest_name);
+    symbols.push(dest);
 
     return 0;
 }
@@ -140,30 +179,14 @@ antlrcpp::Any Visitor::visitExprMultDiv(ifccParser::ExprMultDivContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    auto droite = graph->get_var_index(pop_expression());
-    auto gauche = graph->get_var_index(pop_expression());
+    auto droite = pop_symbol();
+    auto gauche = pop_symbol();
 
-    auto [dest_name, dest_idx] = graph->create_new_tempvar(Type::INT_64);
+    auto dest = graph->create_temp(Type::INT_64);
 
-    std::vector<std::string> params{std::to_string(dest_idx), std::to_string(gauche), std::to_string(droite)};
-    block->add_IRInstr(ctx->MUL() ? Operation::mul : Operation::div, Type::INT_64, params);
+    block->add_instruction(ctx->MUL() ? Operation::mul : Operation::div, Type::INT_64, {dest, gauche, droite});
 
-    expressions.push(dest_name);
-
-    return 0;
-}
-
-antlrcpp::Any Visitor::visitExprVariable(ifccParser::ExprVariableContext* ctx)
-{
-    auto* graph = graphs.back();
-    auto* block = graph->current_bb;
-
-    auto [dest_name, dest_idx] = graph->create_new_tempvar(Type::INT_64);
-    auto source = graph->get_var_index(ctx->IDENTIFIER()->getText());
-
-    block->add_IRInstr(Operation::copy, Type::INT_64, {std::to_string(dest_idx), std::to_string(source)});
-
-    expressions.push(dest_name);
+    symbols.push(dest);
 
     return 0;
 }
@@ -175,40 +198,40 @@ antlrcpp::Any Visitor::visitExprUnaire(ifccParser::ExprUnaireContext* ctx)
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
 
-    auto [facteur_name, facteur_idx] = graph->create_new_tempvar(Type::INT_64);
-    block->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(facteur_idx), ctx->ADD() ? "1" : "-1"});
+    auto facteur = graph->create_temp(Type::INT_64);
+    block->add_instruction(Operation::ldconst, Type::INT_64, {facteur, {ctx->ADD() ? 1 : -1}});
 
-    auto source = graph->get_var_index(pop_expression());
+    auto source = pop_symbol();
 
-    auto [dest_name, dest_idx] = graph->create_new_tempvar(Type::INT_64);
-    block->add_IRInstr(Operation::mul, Type::INT_64, {std::to_string(dest_idx), std::to_string(source), std::to_string(facteur_idx)});
+    auto dest = graph->create_temp(Type::INT_64);
+    block->add_instruction(Operation::mul, Type::INT_64, {dest, source, facteur});
 
-    expressions.push(dest_name);
+    symbols.push(dest);
 
     return 0;
 }
 
 antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
 {
-  
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
-    auto name = ctx->IDENTIFIER()->getText();
-    std::vector<std::string> parameters;
-    parameters.push_back(name);
+    auto  name = ctx->IDENTIFIER()->getText();
+
+    auto                dest = graph->create_temp(Type::INT_64);
+    std::vector<Symbol> parameters{{name, Symbol::Nature::NAME}, dest};
 
     for(int i = 0; i < ctx->expression().size(); i++)
     {
         this->visit(ctx->expression()[i]);
-                
-        parameters.push_back(std::to_string(graph->get_var_index(pop_expression())));
+        parameters.push_back(pop_symbol());
     }
-    
-  
-    block->add_IRInstr(Operation::call, Type::INT_64, parameters);
-      
+
+    block->add_instruction(Operation::call, Type::INT_64, parameters);
+    symbols.push(dest);
+
     return 0;
 }
+
 antlrcpp::Any Visitor::visitLoop(ifccParser::LoopContext* ctx)
 {
     // Getting current CFG
@@ -216,13 +239,13 @@ antlrcpp::Any Visitor::visitLoop(ifccParser::LoopContext* ctx)
     auto* block = graph->current_bb;
 
     // Creating bb after the 'while'
-    auto out_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(out_bb);
+    auto out_bb = new BasicBlock(graph);
+    graph->add_block(out_bb);
 
     // 'while' condition
     auto expression = ctx->expression();
-    auto condition_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(condition_bb);
+    auto condition_bb = new BasicBlock(graph);
+    graph->add_block(condition_bb);
 
     // Branching the previous block to the 'while' condition
     block->exit_true = condition_bb;
@@ -232,11 +255,11 @@ antlrcpp::Any Visitor::visitLoop(ifccParser::LoopContext* ctx)
     this->visit(expression);
     condition_bb = graph->current_bb; // on récupère le "bloc out" de l'expression
 
-    condition_bb->test_var_name = pop_expression();
+    condition_bb->test_symbol = pop_symbol();
 
     // 'while' block
-    auto block_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(block_bb);
+    auto block_bb = new BasicBlock(graph);
+    graph->add_block(block_bb);
 
     // Branching the condition to the beginning of the block
     condition_bb->exit_true = block_bb;
@@ -263,8 +286,8 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
     auto* block = graph->current_bb;
 
     // Creating bb after all the conditions
-    auto out_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(out_bb);
+    auto out_bb = new BasicBlock(graph);
+    graph->add_block(out_bb);
 
     BasicBlock* last_condition_bb = nullptr;
 
@@ -274,8 +297,8 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
         // 'if' condition
         auto expression = ctx->expression()[i];
 
-        auto condition_bb = new BasicBlock(graph, graph->new_BB_name());
-        graph->add_bb(condition_bb);
+        auto condition_bb = new BasicBlock(graph);
+        graph->add_block(condition_bb);
 
         // Branching the first bb
         if(i == 0)
@@ -287,7 +310,7 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
         this->visit(expression);
         condition_bb = graph->current_bb; // on récupère le "bloc out" de l'expression
 
-        condition_bb->test_var_name = pop_expression();
+        condition_bb->test_symbol = pop_symbol();
 
         if(last_condition_bb)
         {
@@ -295,8 +318,8 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
         }
 
         // 'if' block
-        auto block_bb = new BasicBlock(graph, graph->new_BB_name());
-        graph->add_bb(block_bb);
+        auto block_bb = new BasicBlock(graph);
+        graph->add_block(block_bb);
         block_bb->exit_true = out_bb;
 
         graph->current_bb = block_bb;
@@ -316,8 +339,8 @@ antlrcpp::Any Visitor::visitCondition(ifccParser::ConditionContext* ctx)
     {
         auto else_block = ctx->block()[ctx->expression().size()];
 
-        auto else_bb = new BasicBlock(graph, graph->new_BB_name());
-        graph->add_bb(else_bb);
+        auto else_bb = new BasicBlock(graph);
+        graph->add_block(else_bb);
 
         graph->current_bb = else_bb;
         this->visit(else_block);
@@ -336,7 +359,6 @@ antlrcpp::Any Visitor::visitExprAnd(ifccParser::ExprAndContext* ctx)
 {
     // Get results of left and right
     visitChildren(ctx);
-
     reduce_and();
 
     return 0;
@@ -346,7 +368,6 @@ antlrcpp::Any Visitor::visitExprOr(ifccParser::ExprOrContext* ctx)
 {
     // Get results of left and right
     visitChildren(ctx);
-
     reduce_or();
 
     return 0;
@@ -356,7 +377,6 @@ antlrcpp::Any Visitor::visitExprNot(ifccParser::ExprNotContext* ctx)
 {
     // Get value
     visitChildren(ctx);
-
     reduce_not();
 
     return 0;
@@ -371,53 +391,55 @@ antlrcpp::Any Visitor::visitExprCmp(ifccParser::ExprCmpContext* ctx)
     auto* block = graph->current_bb;
 
     // Destination variable
-    auto [dest_name, dest_idx] = graph->create_new_tempvar(Type::INT_64);
+    auto dest = graph->create_temp(Type::INT_64);
 
     // Get results of left and right
-    auto droite = graph->get_var_index(pop_expression());
-    auto gauche = graph->get_var_index(pop_expression());
+    auto droite = pop_symbol();
+    auto gauche = pop_symbol();
+
+    std::vector<Symbol> cmp_params = {dest, gauche, droite};
 
     if(ctx->EQ())
     {
-        block->add_IRInstr(Operation::cmp_eq, Type::INT_64, {std::to_string(dest_idx), std::to_string(gauche), std::to_string(droite)});
-        expressions.push(dest_name);
+        block->add_instruction(Operation::cmp_eq, Type::INT_64, cmp_params);
+        symbols.push(dest);
     }
     else if(ctx->LT())
     {
-        block->add_IRInstr(Operation::cmp_lt, Type::INT_64, {std::to_string(dest_idx), std::to_string(gauche), std::to_string(droite)});
-        expressions.push(dest_name);
+        block->add_instruction(Operation::cmp_lt, Type::INT_64, cmp_params);
+        symbols.push(dest);
     }
     else if(ctx->NE())
     {
-        block->add_IRInstr(Operation::cmp_eq, Type::INT_64, {std::to_string(dest_idx), std::to_string(gauche), std::to_string(droite)});
-        expressions.push(dest_name);
+        block->add_instruction(Operation::cmp_eq, Type::INT_64, cmp_params);
+        symbols.push(dest);
         reduce_not();
     }
     else if(ctx->GE())
     {
-        block->add_IRInstr(Operation::cmp_lt, Type::INT_64, {std::to_string(dest_idx), std::to_string(gauche), std::to_string(droite)});
-        expressions.push(dest_name);
+        block->add_instruction(Operation::cmp_lt, Type::INT_64, cmp_params);
+        symbols.push(dest);
         reduce_not();
     }
     else if(ctx->LE())
     {
-        block->add_IRInstr(Operation::cmp_eq, Type::INT_64, {std::to_string(dest_idx), std::to_string(gauche), std::to_string(droite)});
-        expressions.push(dest_name);
+        block->add_instruction(Operation::cmp_eq, Type::INT_64, cmp_params);
+        symbols.push(dest);
 
-        auto [second_dest_name, second_dest_idx] = graph->create_new_tempvar(Type::INT_64);
-        block->add_IRInstr(Operation::cmp_lt, Type::INT_64, {std::to_string(second_dest_idx), std::to_string(gauche), std::to_string(droite)});
-        expressions.push(second_dest_name);
+        auto second_dest = graph->create_temp(Type::INT_64);
+        block->add_instruction(Operation::cmp_lt, Type::INT_64, {second_dest, gauche, droite});
+        symbols.push(second_dest);
 
         reduce_or();
     }
     else if(ctx->GT())
     {
-        block->add_IRInstr(Operation::cmp_eq, Type::INT_64, {std::to_string(dest_idx), std::to_string(gauche), std::to_string(droite)});
-        expressions.push(dest_name);
+        block->add_instruction(Operation::cmp_eq, Type::INT_64, cmp_params);
+        symbols.push(dest);
 
-        auto [second_dest_name, second_dest_idx] = graph->create_new_tempvar(Type::INT_64);
-        block->add_IRInstr(Operation::cmp_lt, Type::INT_64, {std::to_string(second_dest_idx), std::to_string(gauche), std::to_string(droite)});
-        expressions.push(second_dest_name);
+        auto second_dest = graph->create_temp(Type::INT_64);
+        block->add_instruction(Operation::cmp_lt, Type::INT_64, {second_dest, gauche, droite});
+        symbols.push(second_dest);
 
         reduce_or();
         reduce_not();
@@ -433,41 +455,41 @@ void Visitor::reduce_and()
     auto* block = graph->current_bb;
 
     // Creating out block
-    auto out_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(out_bb);
+    auto out_bb = new BasicBlock(graph);
+    graph->add_block(out_bb);
 
     // Get values
-    auto droite = pop_expression();
-    auto gauche = pop_expression();
+    auto droite = pop_symbol();
+    auto gauche = pop_symbol();
 
     // Destination variable
-    auto [dest_name, dest_idx] = graph->create_new_tempvar(Type::INT_64);
+    auto dest = graph->create_temp(Type::INT_64);
 
     // True / false blocks
-    auto true_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(true_bb);
-    true_bb->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(dest_idx), "1"});
+    auto true_bb = new BasicBlock(graph);
+    graph->add_block(true_bb);
+    true_bb->add_instruction(Operation::ldconst, Type::INT_64, {dest, {1}});
     true_bb->exit_true = out_bb;
 
-    auto false_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(false_bb);
-    false_bb->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(dest_idx), "0"});
+    auto false_bb = new BasicBlock(graph);
+    graph->add_block(false_bb);
+    false_bb->add_instruction(Operation::ldconst, Type::INT_64, {dest, {0}});
     false_bb->exit_true = out_bb;
 
     // Conditions
-    auto droite_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(droite_bb);
-    droite_bb->test_var_name = droite;
+    auto droite_bb = new BasicBlock(graph);
+    graph->add_block(droite_bb);
+    droite_bb->test_symbol = droite;
     droite_bb->exit_true = true_bb;
     droite_bb->exit_false = false_bb;
 
-    auto gauche_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(gauche_bb);
-    gauche_bb->test_var_name = gauche;
+    auto gauche_bb = new BasicBlock(graph);
+    graph->add_block(gauche_bb);
+    gauche_bb->test_symbol = gauche;
     gauche_bb->exit_true = droite_bb;
     gauche_bb->exit_false = false_bb;
 
-    expressions.push(dest_name);
+    symbols.push(dest);
 
     // Init
     block->exit_true = gauche_bb;
@@ -481,41 +503,41 @@ void Visitor::reduce_or()
     auto* block = graph->current_bb;
 
     // Creating out block
-    auto out_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(out_bb);
+    auto out_bb = new BasicBlock(graph);
+    graph->add_block(out_bb);
 
     // Get values
-    auto droite = pop_expression();
-    auto gauche = pop_expression();
+    auto droite = pop_symbol();
+    auto gauche = pop_symbol();
 
     // Destination variable
-    auto [dest_name, dest_idx] = graph->create_new_tempvar(Type::INT_64);
+    auto dest = graph->create_temp(Type::INT_64);
 
     // True / false blocks
-    auto true_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(true_bb);
-    true_bb->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(dest_idx), "1"});
+    auto true_bb = new BasicBlock(graph);
+    graph->add_block(true_bb);
+    true_bb->add_instruction(Operation::ldconst, Type::INT_64, {dest, {1}});
     true_bb->exit_true = out_bb;
 
-    auto false_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(false_bb);
-    false_bb->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(dest_idx), "0"});
+    auto false_bb = new BasicBlock(graph);
+    graph->add_block(false_bb);
+    false_bb->add_instruction(Operation::ldconst, Type::INT_64, {dest, {0}});
     false_bb->exit_true = out_bb;
 
     // Conditions
-    auto droite_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(droite_bb);
-    droite_bb->test_var_name = droite;
+    auto droite_bb = new BasicBlock(graph);
+    graph->add_block(droite_bb);
+    droite_bb->test_symbol = droite;
     droite_bb->exit_true = true_bb;
     droite_bb->exit_false = false_bb;
 
-    auto gauche_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(gauche_bb);
-    block->test_var_name = gauche;
+    auto gauche_bb = new BasicBlock(graph);
+    graph->add_block(gauche_bb);
+    block->test_symbol = gauche;
     block->exit_true = true_bb;
     block->exit_false = droite_bb;
 
-    expressions.push(dest_name);
+    symbols.push(dest);
 
     // Init
     block->exit_true = gauche_bb;
@@ -529,60 +551,44 @@ void Visitor::reduce_not()
     auto* block = graph->current_bb;
 
     // Creating out block
-    auto out_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(out_bb);
+    auto out_bb = new BasicBlock(graph);
+    graph->add_block(out_bb);
 
     // Get value
-    auto value = pop_expression();
+    auto value = pop_symbol();
 
     // Destination variable
-    auto [dest_name, dest_idx] = graph->create_new_tempvar(Type::INT_64);
+    auto dest = graph->create_temp(Type::INT_64);
 
     // True / false blocks
-    auto true_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(true_bb);
-    true_bb->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(dest_idx), "1"});
+    auto true_bb = new BasicBlock(graph);
+    graph->add_block(true_bb);
+    true_bb->add_instruction(Operation::ldconst, Type::INT_64, {dest, {1}});
     true_bb->exit_true = out_bb;
 
-    auto false_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(false_bb);
-    false_bb->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(dest_idx), "0"});
+    auto false_bb = new BasicBlock(graph);
+    graph->add_block(false_bb);
+    false_bb->add_instruction(Operation::ldconst, Type::INT_64, {dest, {0}});
     false_bb->exit_true = out_bb;
 
     // Condition
-    auto not_bb = new BasicBlock(graph, graph->new_BB_name());
-    graph->add_bb(not_bb);
-    not_bb->test_var_name = value;
+    auto not_bb = new BasicBlock(graph);
+    graph->add_block(not_bb);
+    not_bb->test_symbol = value;
     not_bb->exit_true = false_bb;
     not_bb->exit_false = true_bb;
 
-    expressions.push(dest_name);
+    symbols.push(dest);
 
     // Init
     block->exit_true = not_bb;
     graph->current_bb = out_bb;
 }
 
-void Visitor::reduce_assignation()
-{
-    auto* graph = graphs.back();
-    auto* block = graph->current_bb;
-
-    auto expression = graph->get_var_index(pop_expression());
-    auto index = graph->get_var_index(pop_expression());
-    auto lvalue = graph->get_var_index(pop_expression());
-
-    auto [dest_name, dest_idx] = graph->create_new_tempvar(Type::INT_64);
-
-    block->add_IRInstr(Operation::ldconst, Type::INT_64, {std::to_string(dest_idx), "-" + std::to_string(lvalue)});
-    block->add_IRInstr(Operation::add, Type::INT_64, {std::to_string(dest_idx), std::to_string(dest_idx), std::to_string(index)});
-    block->add_IRInstr(Operation::wmem, Type::INT_64, {std::to_string(dest_idx), std::to_string(expression)});
-}
-
-std::string Visitor::pop_expression()
+const Symbol& Visitor::pop_symbol()
 {
     auto*       graph = graphs.back();
-    std::string value = expressions.top();
-    expressions.pop();
+    const auto& value = symbols.top();
+    symbols.pop();
     return value;
 }

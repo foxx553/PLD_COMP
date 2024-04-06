@@ -17,12 +17,12 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/ifccLexer.o \
 	build/ifccVisitor.o \
 	build/ifccParser.o \
+	build/Symbol.o \
 	build/IRInstr.o \
 	build/BasicBlock.o \
 	build/CFG.o \
 	build/Backend.o \
 	build/BackendASM.o \
-	build/BackendARM.o \
 	build/Visitor.o \
 	build/main.o 
 

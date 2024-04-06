@@ -19,7 +19,7 @@ public:
     virtual antlrcpp::Any visitAssignation(ifccParser::AssignationContext* ctx) override;
     virtual antlrcpp::Any visitExprConstante(ifccParser::ExprConstanteContext* ctx) override;
     virtual antlrcpp::Any visitExprAddSub(ifccParser::ExprAddSubContext* ctx) override;
-    virtual antlrcpp::Any visitExprVariable(ifccParser::ExprVariableContext* ctx) override;
+    virtual antlrcpp::Any visitExprLvalue(ifccParser::ExprLvalueContext* ctx) override;
     virtual antlrcpp::Any visitExprMultDiv(ifccParser::ExprMultDivContext* ctx) override;
     virtual antlrcpp::Any visitExprUnaire(ifccParser::ExprUnaireContext* ctx) override;
     virtual antlrcpp::Any visitFunction_call(ifccParser::Function_callContext* ctx) override;
@@ -32,13 +32,11 @@ public:
     virtual antlrcpp::Any visitExprCmp(ifccParser::ExprCmpContext* ctx) override;
 
 private:
-    std::string pop_expression();
-    void reduce_not();
-    void reduce_and();
-    void reduce_or();
-    void reduce_assignation();
+    const Symbol& pop_symbol();
+    void          reduce_not();
+    void          reduce_and();
+    void          reduce_or();
 
-    int                     stack = 0;
-    std::stack<std::string> expressions;
-    IR                      graphs;
+    std::stack<Symbol> symbols; ///< symboles pour la réduction
+    IR                 graphs;
 };

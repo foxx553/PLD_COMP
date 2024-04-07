@@ -16,16 +16,17 @@ condition : 'if' '(' expression ')' block ('else if' '(' expression ')' block)* 
 lvalue : IDENTIFIER ('[' expression ']')?;
 
 expression: '(' expression ')'                          #exprPar
-          | NOT expression                              #exprNot
-          | expression OR expression                    #exprOr
-          | expression AND expression                   #exprAnd
-          | expression (EQ|NE|LT|GT|LE|GE) expression   #exprCmp
+          | constant                                    #exprConstante
+          | lvalue                                      #exprLvalue
+          | function_call                               #exprFunction
           | (SUB|ADD) expression                        #exprUnaire
+          | NOT expression                              #exprNot
           | expression (MUL|DIV|MOD) expression         #exprProduit
           | expression (ADD|SUB) expression             #exprAddSub
-          | lvalue                                      #exprLvalue
-          | constant                                    #exprConstante
-          | function_call                               #exprFunction
+          | expression (LT|GT|LE|GE) expression         #exprCmp
+          | expression (EQ|NE) expression               #exprCmp
+          | expression AND expression                   #exprAnd
+          | expression OR expression                    #exprOr
           ;
 
 return_stmt : RETURN expression ';';

@@ -106,6 +106,8 @@ antlrcpp::Any Visitor::visitDeclaration(ifccParser::DeclarationContext* ctx)
     {
         this->visit(ctx->expression());
         auto expression = pop_symbol();
+
+        block = graph->current_bb; // get out block after visiting
         block->add_instruction(Operation::copy, Type::INT_64, {symbol, expression});
     }
 
@@ -128,6 +130,7 @@ antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
         this->visit(ctx->expression());
         auto index = pop_symbol();
 
+        block = graph->current_bb; // get out block after visiting
         block->add_instruction(Operation::add, Type::INT_64, {dest, index, dest});
     }
 
@@ -311,6 +314,7 @@ antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
         throw std::invalid_argument("Visitor::visitExprFunction: target function " + name + " has " + std::to_string(target->get_params().size()) + " parameters (instead of " + std::to_string(target_params) + ")");
     }
 
+    block = graph->current_bb; // get out block after visiting
     block->add_instruction(Operation::call, Type::INT_64, parameters);
     symbols.push(dest);
 

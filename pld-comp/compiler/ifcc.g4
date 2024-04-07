@@ -42,6 +42,9 @@ expression: '(' expression ')'                          #exprPar
           | expression (ADD|SUB) expression             #exprAddSub
           | expression (LT|GT|LE|GE) expression         #exprCmp
           | expression (EQ|NE) expression               #exprCmp
+          | expression '&' expression                   #BitwiseAndExpr
+          | expression '|' expression                   #BitwiseOrExpr
+          | expression '^' expression                   #BitwiseXorExpr
           | expression AND expression                   #exprAnd
           | expression OR expression                    #exprOr
           | assignment                                  #exprAssignment
@@ -54,6 +57,9 @@ SUB: '-';
 MUL : '*';
 DIV : '/';
 MOD: '%';
+bAND: '&';
+bXOR: '^';
+bOR: '|';
 OR : '||';
 AND : '&&';
 NOT : '!';

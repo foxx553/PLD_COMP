@@ -54,7 +54,7 @@ LE : '<=';
 GE : '>=';
 RETURN : 'return';
 NUMERIC : [0-9]+ ;
-LITERAL : '\'' . '\'';
+LITERAL : '\'' '\\'? . '\'';
 COMMENT : ('/*' .*? '*/' | '//' .*? '\n' ) -> skip;
 DIRECTIVE : '#' .*? '\n' -> skip;
 WS    : [ \t\r\n] -> channel(HIDDEN);

@@ -48,7 +48,7 @@ antlrcpp::Any Visitor::visitFunction(ifccParser::FunctionContext* ctx)
         auto declaration = ctx->declaration()[i];
 
         auto type = Type::INT_64;
-        auto length = declaration->constant() ? std::stoi(declaration->constant()->getText()) : 1;
+        auto length = declaration->constant() ? reduce_constant(declaration->constant()).get_value() : 1;
         auto offset = graph->next_symbol_offset(type, length);
 
         const auto& symbol = current_scope->add_symbol(offset, declaration->IDENTIFIER()->getText(), type, length);
@@ -97,7 +97,7 @@ antlrcpp::Any Visitor::visitDeclaration(ifccParser::DeclarationContext* ctx)
     auto* block = graph->current_bb;
 
     auto type = Type::INT_64;
-    auto length = ctx->constant() ? std::stoi(ctx->constant()->getText()) : 1;
+    auto length = ctx->constant() ? reduce_constant(ctx->constant()).get_value() : 1;
     auto offset = graph->next_symbol_offset(type, length);
 
     const auto& symbol = current_scope->add_symbol(offset, ctx->IDENTIFIER()->getText(), type, length);
@@ -170,9 +170,7 @@ antlrcpp::Any Visitor::visitExprConstante(ifccParser::ExprConstanteContext* ctx)
 
     auto dest = graph->create_temp(current_scope, Type::INT_64);
 
-    int value = ctx->constant()->NUMERIC() ? std::stoi(ctx->constant()->getText()) : static_cast<char>(ctx->constant()->getText()[1]);
-
-    block->add_instruction(Operation::ldconst, Type::INT_64, {dest, {value}});
+    block->add_instruction(Operation::ldconst, Type::INT_64, {dest, reduce_constant(ctx->constant())});
 
     symbols.push(dest);
 
@@ -749,4 +747,28 @@ CFG* Visitor::find_graph(const std::string& name) const
     }
 
     return nullptr;
+}
+
+Symbol Visitor::reduce_constant(ifccParser::ConstantContext* ctx)
+{
+    if(ctx->NUMERIC())
+    {
+        return {std::stoi(ctx->getText())};
+    }
+    else if(ctx->LITERAL())
+    {
+        std::string                literal = ctx->getText();
+        const std::map<char, char> escapes = {{'\\', '\\'}, {'n', '\n'}, {'t', '\t'}, {'0', '\0'}};
+
+        if(literal.size() == 3)
+        {
+            return {literal[1]};
+        }
+        else
+        {
+            return {escapes.count(literal[2]) ? escapes.at(literal[2]) : literal[2]};
+        }
+    }
+
+    return {0};
 }

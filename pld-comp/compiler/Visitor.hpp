@@ -44,6 +44,7 @@ private:
     void          reduce_not();
     void          reduce_and();
     void          reduce_or();
+    Symbol        reduce_constant(ifccParser::ConstantContext* ctx);
     CFG*          find_graph(const std::string& name) const;
 
     std::stack<std::pair<BasicBlock*, BasicBlock*>> loops;         ///< loop tree

@@ -79,6 +79,11 @@ antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
 
     auto dest = pop_symbol();
 
+    if(graph->get_type() == Type::VOID)
+    {
+        std::cerr << "warning: 'return' in function '"<<  graph->get_name() << "' returning void" << std::endl;
+    }
+
     block->add_instruction(Operation::ret, Type::INT_64, {dest});
 
     // exit

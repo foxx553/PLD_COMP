@@ -160,6 +160,25 @@ antlrcpp::Any Visitor::visitAssignation(ifccParser::AssignationContext* ctx)
 
     block->add_instruction(Operation::wmem, Type::INT_64, {left, right});
 
+    symbols.push(left);
+
+    return 0;
+}
+
+antlrcpp::Any Visitor::visitExprAssignment(ifccParser::ExprAssignmentContext* ctx)
+{
+    this->visitChildren(ctx);
+
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    auto address = pop_symbol();
+
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
+    block->add_instruction(Operation::rmem, Type::INT_64, {dest, address});
+
+    symbols.push(dest);
+
     return 0;
 }
 

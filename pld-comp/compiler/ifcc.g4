@@ -27,6 +27,7 @@ expression: '(' expression ')'                          #exprPar
           | expression (EQ|NE) expression               #exprCmp
           | expression AND expression                   #exprAnd
           | expression OR expression                    #exprOr
+          | assignation                                 #exprAssignment
           ;
 
 return_stmt : RETURN expression ';';

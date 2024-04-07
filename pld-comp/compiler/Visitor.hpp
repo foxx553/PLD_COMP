@@ -27,6 +27,7 @@ public:
     virtual antlrcpp::Any visitExprUnaire(ifccParser::ExprUnaireContext* ctx) override;
     virtual antlrcpp::Any visitFunction_call(ifccParser::Function_callContext* ctx) override;
     virtual antlrcpp::Any visitExprFunction(ifccParser::ExprFunctionContext* ctx) override;
+    virtual antlrcpp::Any visitExprAssignment(ifccParser::ExprAssignmentContext* ctx) override;
     virtual antlrcpp::Any visitDeclaration(ifccParser::DeclarationContext* ctx) override;
     virtual antlrcpp::Any visitLoop(ifccParser::LoopContext* ctx) override;
     virtual antlrcpp::Any visitCondition(ifccParser::ConditionContext* ctx) override;

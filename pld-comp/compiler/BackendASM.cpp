@@ -144,11 +144,11 @@ void BackendASM::instruction_wmem(IRInstr* instr)
 
 void BackendASM::instruction_call(IRInstr* instr)
 {
-    std::string registres[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+    std::string registres[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
     for(int i = 2; i < instr->get_params().size(); i++)
     {
-        o << "\tmovl " << symbol(instr->get_param(i)) << ", %" << registres[i - 2] << std::endl;
+        o << "\tmovq " << symbol(instr->get_param(i)) << ", %" << registres[i - 2] << std::endl;
     }
 
     o << "\tcall " << instr->get_param(0).get_name() << std::endl;

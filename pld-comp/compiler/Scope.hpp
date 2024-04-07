@@ -10,10 +10,9 @@ public:
     ~Scope();
 
     const std::map<std::string, Symbol>& get_symbols() const;
-    const Symbol&                        add_symbol(int offset, std::string name, Type t, int length = 1);
     const Symbol&                        add_symbol(const Symbol& symbol);
     const Symbol                         get_symbol(std::string name);
-    const Symbol&                        create_temp(int symbol_offset, int temp_offset, Type type);
+    const Symbol&                        create_temp(int symbol_offset, int temp_offset, Type type, bool pointer = false);
     Scope*                               get_parent();
 
 private:

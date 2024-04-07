@@ -17,7 +17,7 @@
 struct IR
 {
     std::vector<CFG*> graphs;
-    Scope* global_scope;
+    Scope*            global_scope;
 };
 
 class CFG
@@ -29,7 +29,8 @@ public:
     const std::string&  get_name() const;
     int                 next_symbol_offset(Type type, int length = 1);
     int                 get_symbol_offset() const;
-    const Symbol&       create_temp(Scope* scope, Type type);
+    const Symbol&       create_temp(Scope* scope, Type type, bool pointer = false);
+    const Symbol&       create_temp(Scope* scope, const Symbol& symbol);
     void                add_param(Symbol param);
     std::vector<Symbol> get_params() const;
     const Type          get_type() const;

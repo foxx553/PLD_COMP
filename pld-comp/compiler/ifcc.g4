@@ -5,13 +5,13 @@ axiom : prog EOF;
 prog : global*;
 
 global : 
-    return_type IDENTIFIER '(' (TYPE declaration (',' TYPE declaration)* )? ')' block   # function_global
-    | TYPE declaration (',' declaration)* ';'                                           # declaration_global
+    return_type IDENTIFIER '(' (TYPE declaration (',' TYPE declaration)* )? ')' block     # function_global
+    | TYPE declaration (',' declaration)* ';'                                                  # declaration_global
     ;
 
 instruction : 
     'return' expression ';'                                                                     # return_stmt
-    | TYPE declaration (',' declaration)* ';'                                                   # declaration_stmt
+    | TYPE declaration (',' declaration)* ';'                                              # declaration_stmt
     | assignment ';'                                                                            # assignment_stmt
     | function_call ';'                                                                         # function_call_stmt
     | 'break' ';'                                                                               # break_stmt
@@ -23,9 +23,9 @@ instruction :
 
 block : '{' instruction* '}';
 assignment : lvalue '=' expression;
-declaration : IDENTIFIER (array_length | '=' expression)?;
+declaration : MUL? IDENTIFIER (array_length | '=' expression)?;
 function_call : IDENTIFIER '(' (expression (',' expression)* )? ')';
-lvalue : IDENTIFIER array_index?;
+lvalue : MUL? IDENTIFIER array_index?;
 return_type : TYPE | 'void';
 
 array_length : '[' constant ']';
@@ -34,7 +34,7 @@ constant : NUMERIC | LITERAL;
 
 expression: '(' expression ')'                          #exprPar
           | constant                                    #exprConstante
-          | lvalue                                      #exprLvalue
+          | REF? lvalue                                 #exprLvalue
           | function_call                               #exprFunction
           | (SUB|ADD) expression                        #exprUnaire
           | NOT expression                              #exprNot
@@ -48,6 +48,7 @@ expression: '(' expression ')'                          #exprPar
           ;
 
 TYPE : 'int' | 'char';
+REF : '&';
 ADD : '+';
 SUB: '-';
 MUL : '*';
@@ -66,5 +67,5 @@ NUMERIC : [0-9]+ ;
 LITERAL : '\'' '\\'? . '\'';
 COMMENT : ('/*' .*? '*/' | '//' .*? '\n' ) -> skip;
 DIRECTIVE : '#' .*? '\n' -> skip;
-WS    : [ \t\r\n] -> channel(HIDDEN);
+WS : [ \t\r\n] -> channel(HIDDEN);
 IDENTIFIER : [_a-zA-Z][_a-zA-Z0-9]*;

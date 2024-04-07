@@ -6,7 +6,7 @@ Symbol::Symbol() : type(Type::INT_64), offset(0), nature(Nature::VARIABLE), leng
 {
 }
 
-Symbol::Symbol(std::string name, Type type, int offset, int length, Nature nature) : name(name), type(type), offset(offset), nature(nature), length(length)
+Symbol::Symbol(std::string name, Type type, int offset, int length, Nature nature, bool pointer) : name(name), type(type), offset(offset), nature(nature), length(length), pointer(pointer)
 {
 }
 
@@ -48,6 +48,11 @@ const Symbol::Nature Symbol::get_nature() const
     return nature;
 }
 
+const bool Symbol::is_pointer() const
+{
+    return pointer;
+}
+
 const int Symbol::get_type_size(Type type)
 {
     switch(type)
@@ -61,7 +66,7 @@ const int Symbol::get_type_size(Type type)
     case Type::INT_8:
         return 1;
     default:
-        return 1;
+        return 0;
     }
 }
 
@@ -81,4 +86,21 @@ const Type Symbol::type_from_string(const std::string& type)
     }
 
     return Type::INT_64;
+}
+
+const std::string Symbol::type_to_string(Type type)
+{
+    switch(type)
+    {
+    case Type::INT_64:
+        return "int_64";
+    case Type::INT_32:
+        return "int_32";
+    case Type::INT_16:
+        return "int_16";
+    case Type::INT_8:
+        return "int_8";
+    default:
+        return "void";
+    }
 }

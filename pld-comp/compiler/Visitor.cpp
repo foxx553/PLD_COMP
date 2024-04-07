@@ -47,11 +47,11 @@ antlrcpp::Any Visitor::visitFunction_global(ifccParser::Function_globalContext* 
     {
         auto declaration = ctx->declaration()[i];
 
-        auto type = Type::INT_64;
+        auto type = Symbol::type_from_string(ctx->TYPE()[i]->getText());
         auto length = declaration->array_length() ? reduce_constant(declaration->array_length()->constant()).get_value() : 1;
         auto offset = graph->next_symbol_offset(type, length);
 
-        const auto& symbol = current_scope->add_symbol(offset, declaration->IDENTIFIER()->getText(), type, length);
+        const auto& symbol = current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, offset, length, Symbol::Nature::VARIABLE, !!declaration->MUL()});
 
         if(i < 6)
         {
@@ -81,7 +81,7 @@ antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
 
     if(graph->get_type() == Type::VOID)
     {
-        std::cerr << "warning: 'return' in function '"<<  graph->get_name() << "' returning void" << std::endl;
+        std::cerr << "warning: 'return' in function '" << graph->get_name() << "' returning void" << std::endl;
     }
 
     block->add_instruction(Operation::ret, Type::INT_64, {dest});
@@ -108,7 +108,7 @@ antlrcpp::Any Visitor::visitDeclaration_global(ifccParser::Declaration_globalCon
     for(auto declaration: ctx->declaration())
     {
         auto length = declaration->array_length() ? reduce_constant(declaration->array_length()->constant()).get_value() : 1;
-        current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, 0, length, Symbol::Nature::GLOBAL});
+        current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, 0, length, Symbol::Nature::GLOBAL, !!declaration->MUL()});
     }
 
     return 0;
@@ -131,7 +131,7 @@ antlrcpp::Any Visitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext
         auto length = declaration->array_length() ? reduce_constant(declaration->array_length()->constant()).get_value() : 1;
         auto offset = graph->next_symbol_offset(type, length);
 
-        const auto& symbol = current_scope->add_symbol(offset, declaration->IDENTIFIER()->getText(), type, length);
+        const auto& symbol = current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, offset, length, Symbol::Nature::VARIABLE, !!declaration->MUL()});
 
         if(declaration->expression())
         {
@@ -139,6 +139,12 @@ antlrcpp::Any Visitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext
             auto expression = pop_symbol();
 
             block = graph->current_bb; // get out block after visiting
+
+            if(symbol.get_type() != expression.get_type())
+            {
+                throw std::invalid_argument("Visitor::visitAssignment: can't assign type " + Symbol::type_to_string(symbol.get_type()) + " to " + Symbol::type_to_string(expression.get_type()));
+            }
+
             block->add_instruction(Operation::copy, Type::INT_64, {symbol, expression});
         }
     }
@@ -159,7 +165,7 @@ antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
         return 0;
     }
 
-    auto dest = graph->create_temp(current_scope, Type::INT_64);
+    auto dest = graph->create_temp(current_scope, identifier);
     block->add_instruction(Operation::ldconst, Type::INT_64, {dest, {-identifier.get_offset()}});
     block->add_instruction(Operation::add, Type::INT_64, {dest, {"bp", Symbol::Nature::REGISTER}, dest});
 
@@ -170,6 +176,16 @@ antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
 
         block = graph->current_bb; // get out block after visiting
         block->add_instruction(Operation::add, Type::INT_64, {dest, index, dest});
+    }
+
+    if(ctx->MUL())
+    {
+        if(!identifier.is_pointer())
+        {
+            throw std::invalid_argument("Visitor::visitExprLvalue: cannot dereference variable " + identifier.get_name() + " which is not a pointer type");
+        }
+
+        block->add_instruction(Operation::rmem, Type::INT_64, {dest, dest});
     }
 
     symbols.push(dest);
@@ -195,6 +211,11 @@ antlrcpp::Any Visitor::visitAssignment(ifccParser::AssignmentContext* ctx)
 
     auto right = pop_symbol();
     auto left = pop_symbol();
+
+    if(right.get_type() != left.get_type())
+    {
+        throw std::invalid_argument("Visitor::visitAssignment: can't assign type " + Symbol::type_to_string(right.get_type()) + " to " + Symbol::type_to_string(left.get_type()));
+    }
 
     if(left.get_nature() == Symbol::Nature::GLOBAL)
     {
@@ -249,15 +270,16 @@ antlrcpp::Any Visitor::visitExprLvalue(ifccParser::ExprLvalueContext* ctx)
 
     auto value = pop_symbol();
 
-    if(value.get_nature() == Symbol::Nature::GLOBAL)
+    if(ctx->REF() || value.get_nature() == Symbol::Nature::GLOBAL)
     {
         symbols.push(value);
-        return 0;
     }
-
-    auto dest = graph->create_temp(current_scope, Type::INT_64);
-    block->add_instruction(Operation::rmem, Type::INT_64, {dest, value});
-    symbols.push(dest);
+    else
+    {
+        auto dest = graph->create_temp(current_scope, Type::INT_64);
+        block->add_instruction(Operation::rmem, Type::INT_64, {dest, value});
+        symbols.push(dest);
+    }
 
     return 0;
 }

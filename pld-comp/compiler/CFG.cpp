@@ -40,10 +40,16 @@ std::string CFG::block_name()
     return name + "_BB_" + std::to_string(block_offset++);
 }
 
-const Symbol& CFG::create_temp(Scope* scope, Type type)
+const Symbol& CFG::create_temp(Scope* scope, Type type, bool pointer)
 {
     symbol_offset += Symbol::get_type_size(type);
-    return scope->create_temp(symbol_offset, temp_offset++, type);
+    return scope->create_temp(symbol_offset, temp_offset++, type, pointer);
+}
+
+const Symbol& CFG::create_temp(Scope* scope, const Symbol& symbol)
+{
+    symbol_offset += Symbol::get_type_size(symbol.get_type());
+    return scope->create_temp(symbol_offset, temp_offset++, symbol.get_type(), symbol.is_pointer());
 }
 
 int CFG::next_symbol_offset(Type type, int length)

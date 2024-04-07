@@ -23,19 +23,6 @@ const std::map<std::string, Symbol>& Scope::get_symbols() const
     return symbols;
 }
 
-const Symbol& Scope::add_symbol(int offset, std::string name, Type type, int length)
-{
-    if(symbols.count(name) != 0)
-    {
-        throw std::invalid_argument("Scope::add_symbol: symbol already exists");
-    }
-
-    symbols[name] = {name, type, offset, length};
-    used_symbols[name] = false;
-
-    return symbols[name];
-}
-
 const Symbol& Scope::add_symbol(const Symbol& symbol)
 {
     if(symbols.count(symbol.get_name()) != 0)
@@ -49,10 +36,10 @@ const Symbol& Scope::add_symbol(const Symbol& symbol)
     return symbol;
 }
 
-const Symbol& Scope::create_temp(int symbol_offset, int temp_offset, Type type)
+const Symbol& Scope::create_temp(int symbol_offset, int temp_offset, Type type, bool pointer)
 {
     auto name = "tmp_" + std::to_string(temp_offset);
-    symbols[name] = {name, type, symbol_offset};
+    symbols[name] = {name, type, symbol_offset, 1, Symbol::Nature::VARIABLE, pointer};
 
     return symbols[name];
 }

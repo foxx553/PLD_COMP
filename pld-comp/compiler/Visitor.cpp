@@ -57,7 +57,7 @@ antlrcpp::Any Visitor::visitFunction_global(ifccParser::Function_globalContext* 
 
         auto offset = graph->next_symbol_offset(type, length);
 
-        const auto& symbol = current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, offset, length, Symbol::Nature::VARIABLE, !!declaration->MUL()});
+        const auto& symbol = current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, offset, length, Symbol::Nature::VARIABLE, !!declaration->MUL() || declaration->array_length()});
 
         if(i < 6)
         {
@@ -120,7 +120,7 @@ antlrcpp::Any Visitor::visitDeclaration_global(ifccParser::Declaration_globalCon
             throw std::invalid_argument("Visitor::visitDeclaration_stmt: array length can't be less than 1");
         }
 
-        current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, 0, length, Symbol::Nature::GLOBAL, !!declaration->MUL()});
+        current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, 0, length, Symbol::Nature::GLOBAL, !!declaration->MUL() || declaration->array_length()});
     }
 
     return 0;
@@ -149,21 +149,30 @@ antlrcpp::Any Visitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext
 
         auto offset = graph->next_symbol_offset(type, length);
 
-        const auto& symbol = current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, offset, length, Symbol::Nature::VARIABLE, !!declaration->MUL()});
-
-        if(declaration->expression())
+        if(declaration->array_length())
         {
-            this->visit(declaration->expression());
-            auto expression = pop_symbol();
+            const auto& symbol = current_scope->add_symbol({declaration->IDENTIFIER()->getText(), Type::INT_64, graph->next_symbol_offset(Type::INT_64, 1), length, Symbol::Nature::VARIABLE, true});
+            block->add_instruction(Operation::ldconst, Type::INT_64, {symbol, {-offset}});
+            block->add_instruction(Operation::add, Type::INT_64, {symbol, {"bp", Symbol::Nature::REGISTER}, symbol});
+        }
+        else
+        {
+            const auto& symbol = current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, offset, length, Symbol::Nature::VARIABLE, !!declaration->MUL()});
 
-            block = graph->current_bb; // get out block after visiting
-
-            if(symbol.get_type() != expression.get_type())
+            if(declaration->expression())
             {
-                throw std::invalid_argument("Visitor::visitAssignment: can't assign type " + Symbol::type_to_string(symbol.get_type()) + " to " + Symbol::type_to_string(expression.get_type()));
-            }
+                this->visit(declaration->expression());
+                auto expression = pop_symbol();
 
-            block->add_instruction(Operation::copy, Type::INT_64, {symbol, expression});
+                block = graph->current_bb; // get out block after visiting
+
+                if(symbol.get_type() != expression.get_type())
+                {
+                    throw std::invalid_argument("Visitor::visitAssignment: can't assign type " + Symbol::type_to_string(symbol.get_type()) + " to " + Symbol::type_to_string(expression.get_type()));
+                }
+
+                block->add_instruction(Operation::copy, Type::INT_64, {symbol, expression});
+            }
         }
     }
 
@@ -193,6 +202,7 @@ antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
         auto index = pop_symbol();
         block = graph->current_bb; // get out block after visiting
 
+        block->add_instruction(Operation::rmem, Type::INT_64, {dest, dest});
         block->add_instruction(Operation::mul, Type::INT_64, {index, {Symbol::get_type_size(identifier.get_type())}, index});
         block->add_instruction(Operation::add, Type::INT_64, {dest, index, dest});
     }

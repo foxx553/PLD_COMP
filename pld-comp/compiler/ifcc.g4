@@ -2,18 +2,35 @@ grammar ifcc;
 
 axiom : prog EOF;
 
-prog : (function | declare_stmt)*;
-function : (TYPE | VOID) IDENTIFIER '(' (TYPE declaration (',' TYPE declaration)* )? ')' block;
+prog : global*;
 
-instruction : (return_stmt | declare_stmt | assign_stmt | call_stmt | loop | condition | block | break_stmt | continue_stmt)*;
+global : 
+    return_type IDENTIFIER '(' (TYPE declaration (',' TYPE declaration)* )? ')' block   # function_global
+    | TYPE declaration (',' declaration)* ';'                                           # declaration_global
+    ;
 
-block : '{' instruction '}';
+instruction : 
+    'return' expression ';'                                                                     # return_stmt
+    | TYPE declaration (',' declaration)* ';'                                                   # declaration_stmt
+    | assignment ';'                                                                            # assignment_stmt
+    | function_call ';'                                                                         # function_call_stmt
+    | 'break' ';'                                                                               # break_stmt
+    | 'continue' ';'                                                                            # continue_stmt
+    | 'while' '(' expression ')' block                                                          # loop_stmt
+    | 'if' '(' expression ')' block ('else' 'if' '(' expression ')' block)* ('else' block)?     # condition_stmt
+    | block                                                                                     # block_stmt
+    ;
+
+block : '{' instruction* '}';
+assignment : lvalue '=' expression;
+declaration : IDENTIFIER (array_length | '=' expression)?;
 function_call : IDENTIFIER '(' (expression (',' expression)* )? ')';
-assignation : lvalue '=' expression;
-declaration : IDENTIFIER ('[' constant ']' | '=' expression)?;
-loop : 'while' '(' expression ')' block;
-condition : 'if' '(' expression ')' block ('else if' '(' expression ')' block)* ('else' block)?;
-lvalue : IDENTIFIER ('[' expression ']')?;
+lvalue : IDENTIFIER array_index?;
+return_type : TYPE | 'void';
+
+array_length : '[' constant ']';
+array_index : '[' expression ']';
+constant : NUMERIC | LITERAL;
 
 expression: '(' expression ')'                          #exprPar
           | constant                                    #exprConstante
@@ -27,19 +44,10 @@ expression: '(' expression ')'                          #exprPar
           | expression (EQ|NE) expression               #exprCmp
           | expression AND expression                   #exprAnd
           | expression OR expression                    #exprOr
-          | assignation                                 #exprAssignment
+          | assignment                                  #exprAssignment
           ;
 
-return_stmt : RETURN expression ';';
-declare_stmt : TYPE declaration (',' declaration)* ';';
-assign_stmt : assignation ';';
-call_stmt : function_call ';';
-break_stmt : 'break' ';';
-continue_stmt : 'continue' ';';
-constant : NUMERIC | LITERAL ;
-
-TYPE: 'int' | 'char';
-VOID: 'void';
+TYPE : 'int' | 'char';
 ADD : '+';
 SUB: '-';
 MUL : '*';
@@ -54,7 +62,6 @@ LT : '<';
 GT : '>';
 LE : '<=';
 GE : '>=';
-RETURN : 'return';
 NUMERIC : [0-9]+ ;
 LITERAL : '\'' '\\'? . '\'';
 COMMENT : ('/*' .*? '*/' | '//' .*? '\n' ) -> skip;

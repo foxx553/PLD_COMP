@@ -18,6 +18,11 @@ Scope::~Scope()
     }
 }
 
+const std::map<std::string, Symbol>& Scope::get_symbols() const
+{
+    return symbols;
+}
+
 const Symbol& Scope::add_symbol(int offset, std::string name, Type type, int length)
 {
     if(symbols.count(name) != 0)

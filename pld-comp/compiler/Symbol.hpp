@@ -21,13 +21,14 @@ public:
         VARIABLE,
         REGISTER,
         CONSTANT,
+        GLOBAL,
         NAME
     };
 
     Symbol();
-    Symbol(std::string name, Type type, int offset, int length = 1); // variable constructor
-    Symbol(std::string name, Nature nature, int offset = 0);         // name / register constructor
-    Symbol(int value, Type type = Type::INT_64);                     // constant constructor
+    Symbol(std::string name, Type type, int offset, int length = 1, Nature nature = Nature::VARIABLE); // variable constructor
+    Symbol(std::string name, Nature nature, int offset = 0);                                           // name / register constructor
+    Symbol(int value, Type type = Type::INT_64);                                                       // constant constructor
 
     const Type         get_type() const;
     const std::string& get_name() const;

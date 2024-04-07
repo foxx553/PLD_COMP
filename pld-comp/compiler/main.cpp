@@ -57,11 +57,11 @@ int main(int argn, const char** argv)
     v.visit(tree);
 
     // on récupère l'IR
-    IR graphs = v.get_graphs();
+    IR ir = v.get_ir();
 
     // on génère le backend
     std::ofstream file(output);
-    BackendASM    backend(graphs, output.empty() ? std::cout : file);
+    BackendASM    backend(ir, output.empty() ? std::cout : file);
     backend.generate();
 
     return 0;

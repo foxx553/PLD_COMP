@@ -6,7 +6,7 @@ Symbol::Symbol() : type(Type::INT_64), offset(0), nature(Nature::VARIABLE), leng
 {
 }
 
-Symbol::Symbol(std::string name, Type type, int offset, int length) : name(name), type(type), offset(offset), nature(Nature::VARIABLE), length(length)
+Symbol::Symbol(std::string name, Type type, int offset, int length, Nature nature) : name(name), type(type), offset(offset), nature(nature), length(length)
 {
 }
 

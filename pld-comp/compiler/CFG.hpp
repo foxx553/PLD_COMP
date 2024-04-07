@@ -14,7 +14,11 @@
 
  */
 
-typedef std::vector<CFG*> IR;
+struct IR
+{
+    std::vector<CFG*> graphs;
+    Scope* global_scope;
+};
 
 class CFG
 {

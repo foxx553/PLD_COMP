@@ -6,8 +6,34 @@ BackendASM::~BackendASM()
 
 void BackendASM::begin()
 {
-    o << ".text" << std::endl;
-    o << ".globl main" << std::endl;
+    std::vector<Symbol*> symbols;
+    for(auto [name, symbol]: ir.global_scope->get_symbols())
+    {
+        symbols.push_back(&symbol);
+    }
+
+    o << "\t.text" << std::endl;
+
+    if(symbols.size() == 0)
+    {
+        o << "\t.globl main" << std::endl;
+    }
+    else
+    {
+        o << "\t.bss" << std::endl;
+        o << "\t.globl\t" << symbols[0]->get_name() << std::endl;
+        o << "\t.type\t" << symbols[0]->get_name() << ", @object" << std::endl;
+
+        for(int i = 0; i < symbols.size(); ++i)
+        {
+            bool last = i + 1 == symbols.size();
+            o << symbols[i]->get_name() << ":" << std::endl;
+            o << "\t.zero\t4" << std::endl;
+            o << "\t.text" << std::endl;
+            o << "\t.globl\t" << (last ? "main" : symbols[i + 1]->get_name()) << std::endl;
+            o << "\t.type\t" << (last ? "main" : symbols[i + 1]->get_name()) << ", " << (last ? "@function" : "@object") << std::endl;
+        }
+    }
 }
 
 void BackendASM::graph_begin(CFG* cfg)
@@ -168,6 +194,10 @@ std::string BackendASM::symbol(const Symbol& symbol)
     else if(symbol.get_nature() == Symbol::Nature::VARIABLE)
     {
         return "-" + std::to_string(symbol.get_offset()) + "(%rbp)";
+    }
+    else if(symbol.get_nature() == Symbol::Nature::GLOBAL)
+    {
+        return symbol.get_name() + "(%rip)";
     }
 
     return symbol.get_name();

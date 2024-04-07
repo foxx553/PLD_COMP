@@ -12,7 +12,7 @@ void Backend::generate()
 {
     begin();
 
-    for(auto cfg: ir)
+    for(auto cfg: ir.graphs)
     {
         graph(cfg);
     }

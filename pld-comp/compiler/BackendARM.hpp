@@ -19,6 +19,7 @@ private:
     void instruction_copy(IRInstr* instr);
     void instruction_add(IRInstr* instr);
     void instruction_sub(IRInstr* instr);
+    void instruction_mod(IRInstr* instr);
     void instruction_mul(IRInstr* instr);
     void instruction_div(IRInstr* instr);
     void instruction_ret(IRInstr* instr);
@@ -27,4 +28,6 @@ private:
     void instruction_call(IRInstr* instr);
     void instruction_cmp_eq(IRInstr* instr);
     void instruction_cmp_lt(IRInstr* instr);
+
+    std::string symbol(const Symbol& symbol);
 };

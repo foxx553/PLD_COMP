@@ -6,7 +6,7 @@ void fonc(int a)
 
 int main()
 {
-    int a = 2;
+    int a = 2;                 
 
     fonc(a);
     

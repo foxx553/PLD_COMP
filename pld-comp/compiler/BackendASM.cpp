@@ -102,9 +102,9 @@ void BackendASM::instruction_sub(IRInstr* instr)
 
 void BackendASM::instruction_mul(IRInstr* instr)
 {
-    o << "\tmovl " << symbol(instr->get_param(1)) << ", %eax" << std::endl;
-    o << "\tmul " << symbol(instr->get_param(2)) << std::endl;
-    o << "\tmovl %eax, " << symbol(instr->get_param(0)) << std::endl;
+    o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;
+    o << "\tmulq " << symbol(instr->get_param(2)) << std::endl;
+    o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
 }
 
 void BackendASM::instruction_div(IRInstr* instr)

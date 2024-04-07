@@ -49,6 +49,12 @@ antlrcpp::Any Visitor::visitFunction_global(ifccParser::Function_globalContext* 
 
         auto type = Symbol::type_from_string(ctx->TYPE()[i]->getText());
         auto length = declaration->array_length() ? reduce_constant(declaration->array_length()->constant()).get_value() : 1;
+
+        if(length < 1)
+        {
+            throw std::invalid_argument("Visitor::visitDeclaration_stmt: array length can't be less than 1");
+        }
+
         auto offset = graph->next_symbol_offset(type, length);
 
         const auto& symbol = current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, offset, length, Symbol::Nature::VARIABLE, !!declaration->MUL()});
@@ -108,6 +114,12 @@ antlrcpp::Any Visitor::visitDeclaration_global(ifccParser::Declaration_globalCon
     for(auto declaration: ctx->declaration())
     {
         auto length = declaration->array_length() ? reduce_constant(declaration->array_length()->constant()).get_value() : 1;
+
+        if(length < 1)
+        {
+            throw std::invalid_argument("Visitor::visitDeclaration_stmt: array length can't be less than 1");
+        }
+
         current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, 0, length, Symbol::Nature::GLOBAL, !!declaration->MUL()});
     }
 
@@ -129,6 +141,12 @@ antlrcpp::Any Visitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext
         auto* block = graph->current_bb;
 
         auto length = declaration->array_length() ? reduce_constant(declaration->array_length()->constant()).get_value() : 1;
+
+        if(length < 1)
+        {
+            throw std::invalid_argument("Visitor::visitDeclaration_stmt: array length can't be less than 1");
+        }
+
         auto offset = graph->next_symbol_offset(type, length);
 
         const auto& symbol = current_scope->add_symbol({declaration->IDENTIFIER()->getText(), type, offset, length, Symbol::Nature::VARIABLE, !!declaration->MUL()});
@@ -173,8 +191,9 @@ antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
     {
         this->visit(ctx->array_index());
         auto index = pop_symbol();
-
         block = graph->current_bb; // get out block after visiting
+
+        block->add_instruction(Operation::mul, Type::INT_64, {index, {Symbol::get_type_size(identifier.get_type())}, index});
         block->add_instruction(Operation::add, Type::INT_64, {dest, index, dest});
     }
 
@@ -421,37 +440,35 @@ antlrcpp::Any Visitor::visitLoop_stmt(ifccParser::Loop_stmtContext* ctx)
     graph->add_block(out_bb);
 
     // 'while' condition
-    auto condition_bb = new BasicBlock(graph);
-    graph->add_block(condition_bb);
+    auto condition_begin_bb = new BasicBlock(graph);
+    graph->add_block(condition_begin_bb);
 
     // Register loop
-    loops.push(std::make_pair(condition_bb, out_bb));
+    loops.push(std::make_pair(condition_begin_bb, out_bb));
 
     // Branching the previous block to the 'while' condition
-    block->exit_true = condition_bb;
+    block->exit_true = condition_begin_bb;
 
     // Visiting the condition expression
-    graph->current_bb = condition_bb;
+    graph->current_bb = condition_begin_bb;
     this->visit(ctx->expression());
-    condition_bb = graph->current_bb; // on récupère le "bloc out" de l'expression
+    auto condition_end_bb = graph->current_bb; // on récupère le "bloc out" de l'expression
 
-    condition_bb->test_symbol = pop_symbol();
+    condition_end_bb->test_symbol = pop_symbol();
 
     // 'while' block
     auto block_bb = new BasicBlock(graph);
     graph->add_block(block_bb);
 
     // Branching the condition to the beginning of the block
-    condition_bb->exit_true = block_bb;
+    condition_end_bb->exit_true = block_bb;
+    condition_end_bb->exit_false = out_bb;
 
     // Branching the 'while' block to the condition bb
     graph->current_bb = block_bb;
     this->visit(ctx->block());
     block_bb = graph->current_bb; // on récupère le "bloc out" du bloc
-    block_bb->exit_true = condition_bb;
-
-    // bb linking
-    condition_bb->exit_false = out_bb;
+    block_bb->exit_true = condition_begin_bb;
 
     // Setting current bb to the out bb
     graph->current_bb = out_bb;
@@ -713,9 +730,9 @@ void Visitor::reduce_or()
 
     auto gauche_bb = new BasicBlock(graph);
     graph->add_block(gauche_bb);
-    block->test_symbol = gauche;
-    block->exit_true = true_bb;
-    block->exit_false = droite_bb;
+    gauche_bb->test_symbol = gauche;
+    gauche_bb->exit_true = true_bb;
+    gauche_bb->exit_false = droite_bb;
 
     symbols.push(dest);
 

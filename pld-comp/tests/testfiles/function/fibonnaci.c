@@ -12,7 +12,6 @@ int fibonacci(int n)
 
 int main()
 {
-
     int resultat = fibonacci(10);
     return resultat;
 }

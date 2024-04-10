@@ -36,6 +36,7 @@ expression: '(' expression ')'                          #exprPar
           | constant                                    #exprConstante
           | REF? lvalue                                 #exprLvalue
           | function_call                               #exprFunction
+          | expression (BXOR|BOR|BAND) expression       #exprBitwiseOperation
           | (SUB|ADD) expression                        #exprUnaire
           | NOT expression                              #exprNot
           | expression (MUL|DIV|MOD) expression         #exprProduit
@@ -56,6 +57,9 @@ DIV : '/';
 MOD: '%';
 OR : '||';
 AND : '&&';
+BAND : '& ';
+BXOR : '^';
+BOR : '|';
 NOT : '!';
 EQ : '==';
 NE : '!=';

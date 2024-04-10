@@ -33,6 +33,10 @@ public:
 
     virtual antlrcpp::Any visitExprConstante(ifccParser::ExprConstanteContext* ctx) override;
     virtual antlrcpp::Any visitExprAddSub(ifccParser::ExprAddSubContext* ctx) override;
+   /* virtual antlrcpp::Any visitExprBxor(ifccParser::ExprBxorContext* ctx) override;
+    virtual antlrcpp::Any visitExprBor(ifccParser::ExprBorContext* ctx) override;
+    virtual antlrcpp::Any visitExprBand(ifccParser::ExprBandContext* ctx) override;*/
+    virtual antlrcpp::Any visitExprBitwiseOperation(ifccParser::ExprBitwiseOperationContext* ctx) override;
     virtual antlrcpp::Any visitExprLvalue(ifccParser::ExprLvalueContext* ctx) override;
     virtual antlrcpp::Any visitExprProduit(ifccParser::ExprProduitContext* ctx) override;
     virtual antlrcpp::Any visitExprUnaire(ifccParser::ExprUnaireContext* ctx) override;

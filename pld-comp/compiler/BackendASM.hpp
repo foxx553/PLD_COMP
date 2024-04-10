@@ -19,6 +19,9 @@ private:
     void instruction_copy(IRInstr* instr);
     void instruction_add(IRInstr* instr);
     void instruction_sub(IRInstr* instr);
+    void instruction_bxor(IRInstr* instr);
+    void instruction_bor(IRInstr* instr);
+    void instruction_band(IRInstr* instr);
     void instruction_mul(IRInstr* instr);
     void instruction_div(IRInstr* instr);
     void instruction_mod(IRInstr* instr);

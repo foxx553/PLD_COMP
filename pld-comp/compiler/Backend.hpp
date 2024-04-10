@@ -26,6 +26,9 @@ protected:
     virtual void instruction_copy(IRInstr* instr) = 0;
     virtual void instruction_add(IRInstr* instr) = 0;
     virtual void instruction_sub(IRInstr* instr) = 0;
+    virtual void instruction_bxor(IRInstr* instr) = 0;
+    virtual void instruction_bor(IRInstr* instr) = 0;
+    virtual void instruction_band(IRInstr* instr) = 0;
     virtual void instruction_mul(IRInstr* instr) = 0;
     virtual void instruction_div(IRInstr* instr) = 0;
     virtual void instruction_mod(IRInstr* instr) = 0;

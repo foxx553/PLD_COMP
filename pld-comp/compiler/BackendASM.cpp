@@ -100,6 +100,28 @@ void BackendASM::instruction_sub(IRInstr* instr)
     o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
 }
 
+void BackendASM::instruction_bxor(IRInstr* instr)
+{
+    o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;
+    o << "\txorq " << symbol(instr->get_param(2)) << ", %rax" << std::endl;
+    o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
+}
+
+void BackendASM::instruction_bor(IRInstr* instr)
+{
+    o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;
+    o << "\torq " << symbol(instr->get_param(2)) << ", %rax" << std::endl;
+    o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
+}
+
+void BackendASM::instruction_band(IRInstr* instr)
+{
+    o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;
+    o << "\tandq " << symbol(instr->get_param(2)) << ", %rax" << std::endl;
+    o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
+}
+
+
 void BackendASM::instruction_mul(IRInstr* instr)
 {
     o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;

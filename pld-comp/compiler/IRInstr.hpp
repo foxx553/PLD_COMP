@@ -18,6 +18,9 @@ enum class Operation
     copy,    // a = b
     add,     // x + y
     sub,     // x - y
+    bxor,    // x ^ y
+    band,    // x & y
+    bor,     // x | y
     mul,     // x * y
     div,     // x / y
     mod,     // x % y

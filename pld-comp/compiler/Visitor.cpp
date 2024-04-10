@@ -331,6 +331,84 @@ antlrcpp::Any Visitor::visitExprAddSub(ifccParser::ExprAddSubContext* ctx)
 
     return 0;
 }
+/*
+antlrcpp::Any Visitor::visitExprBxor(ifccParser::ExprBxorContext* ctx)
+{
+    visitChildren(ctx);
+
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    auto droite = pop_symbol();
+    auto gauche = pop_symbol();
+
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
+
+    block->add_instruction(Operation::bxor, Type::INT_64, {dest, gauche, droite});
+
+    symbols.push(dest);
+
+    return 0;
+}
+
+antlrcpp::Any Visitor::visitExprBor(ifccParser::ExprBorContext* ctx)
+{
+    visitChildren(ctx);
+
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    auto droite = pop_symbol();
+    auto gauche = pop_symbol();
+
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
+
+    block->add_instruction(Operation::bor, Type::INT_64, {dest, gauche, droite});
+
+    symbols.push(dest);
+
+    return 0;
+}
+exprBitwiseOperation
+antlrcpp::Any Visitor::visitExprBand(ifccParser::ExprBandContext* ctx)
+{
+    visitChildren(ctx);
+
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    auto droite = pop_symbol();
+    auto gauche = pop_symbol();
+
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
+
+    block->add_instruction(Operation::band, Type::INT_64, {dest, gauche, droite});
+
+    symbols.push(dest);
+
+    return 0;
+}
+
+exprBitwiseOperation
+*/
+antlrcpp::Any Visitor::visitExprBitwiseOperation(ifccParser::ExprBitwiseOperationContext* ctx)
+{
+    visitChildren(ctx);
+
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    auto droite = pop_symbol();
+    auto gauche = pop_symbol();
+
+    auto dest = graph->create_temp(current_scope, Type::INT_64);
+
+    block->add_instruction(ctx->BAND() ? Operation::band : (ctx->BXOR() ? Operation::bxor : Operation::bor), Type::INT_64, {dest, gauche, droite});
+
+    symbols.push(dest);
+
+    return 0;
+}
 
 antlrcpp::Any Visitor::visitExprProduit(ifccParser::ExprProduitContext* ctx)
 {

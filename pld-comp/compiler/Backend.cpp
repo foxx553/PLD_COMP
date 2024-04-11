@@ -74,7 +74,7 @@ void Backend::block(BasicBlock* bb)
 
 /**
  * Permet l'ecriture d'une instruction en code assembleur
- * @param instr l'instructions à traduire en assembleur
+ * @param instr : l'instructions à traduire en assembleur
  * La classe IRInstr contient un attribut Operation
  * C'est sur la base du type d'opération que la traduction en assembleur se fait
  */

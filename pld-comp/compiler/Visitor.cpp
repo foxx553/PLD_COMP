@@ -303,6 +303,9 @@ antlrcpp::Any Visitor::visitBlock_stmt(ifccParser::Block_stmtContext* ctx)
 }
 
 
+/**
+ * C'est le Visiteur pour l'appel des fonctions
+*/
 
 antlrcpp::Any Visitor::visitAssignment(ifccParser::AssignmentContext* ctx)
 {
@@ -355,6 +358,12 @@ antlrcpp::Any Visitor::visitExprAssignment(ifccParser::ExprAssignmentContext* ct
     return 0;
 }
 
+
+
+/**
+ * TO DO Fatih
+*/
+
 antlrcpp::Any Visitor::visitExprConstante(ifccParser::ExprConstanteContext* ctx)
 {
     auto* graph = graphs.back();
@@ -368,6 +377,12 @@ antlrcpp::Any Visitor::visitExprConstante(ifccParser::ExprConstanteContext* ctx)
 
     return 0;
 }
+
+
+
+/**
+ * TO DO Fatih
+*/
 
 antlrcpp::Any Visitor::visitExprLvalue(ifccParser::ExprLvalueContext* ctx)
 {
@@ -391,6 +406,12 @@ antlrcpp::Any Visitor::visitExprLvalue(ifccParser::ExprLvalueContext* ctx)
 
     return 0;
 }
+
+
+
+/**
+ * TO DO Fatih
+*/
 
 antlrcpp::Any Visitor::visitExprAddSub(ifccParser::ExprAddSubContext* ctx)
 {
@@ -449,6 +470,12 @@ antlrcpp::Any Visitor::visitExprProduit(ifccParser::ExprProduitContext* ctx)
 
     return 0;
 }
+
+
+
+/**
+ * TO DO Fatih
+*/
 
 antlrcpp::Any Visitor::visitExprUnaire(ifccParser::ExprUnaireContext* ctx)
 {

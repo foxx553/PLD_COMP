@@ -2,14 +2,19 @@
 
 #include <iostream>
 
+
+/**
+ * Constructeur
+ */
+
 Visitor::Visitor() : current_scope(nullptr)
 {
 }
 
-IR Visitor::get_ir()
-{
-    return {graphs, scopes.front()};
-}
+
+/**
+ * Destructeur
+ */
 
 Visitor::~Visitor()
 {
@@ -24,6 +29,21 @@ Visitor::~Visitor()
     }
 }
 
+
+/**
+ * TO DO Fatih
+*/
+IR Visitor::get_ir()
+{
+    return {graphs, scopes.front()};
+}
+
+
+/**
+ * C'est le Visiteur de notre programme
+ * Ce visiteur va permetre de parcourir le main et les différentes fonctions
+*/
+
 antlrcpp::Any Visitor::visitProg(ifccParser::ProgContext* ctx)
 {
     open_scope();
@@ -32,6 +52,14 @@ antlrcpp::Any Visitor::visitProg(ifccParser::ProgContext* ctx)
 
     return 0;
 }
+
+
+
+/**
+ * C'est le Visiteur pour le main et les fonctions
+ * Crée un nouveau graphe(CFG) à partir du nom et du type de retour de la fonction
+ *TO DO Fatih 
+*/
 
 antlrcpp::Any Visitor::visitFunction_global(ifccParser::Function_globalContext* ctx)
 {
@@ -50,6 +78,7 @@ antlrcpp::Any Visitor::visitFunction_global(ifccParser::Function_globalContext* 
         auto type = Symbol::type_from_string(ctx->TYPE()[i]->getText());
         auto length = declaration->array_length() ? reduce_constant(declaration->array_length()->constant()).get_value() : 1;
 
+        /*Si un tableau est déclaré, sa taille ne doit pas etre inferieure à 1*/
         if(length < 1)
         {
             throw std::invalid_argument("Visitor::visitDeclaration_stmt: array length can't be less than 1");
@@ -76,6 +105,14 @@ antlrcpp::Any Visitor::visitFunction_global(ifccParser::Function_globalContext* 
     return 0;
 }
 
+
+
+/**
+ * C'est le Visiteur du return
+ * 1- Ajoute l'instruction "ret" au current BasicBlock
+ * 2- Relis la sortie du current BasicBlock au BasicBlock de fin du graphe
+*/
+
 antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
 {
     this->visitChildren(ctx);
@@ -85,7 +122,8 @@ antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
 
     auto dest = pop_symbol();
 
-    if(graph->get_type() == Type::VOID)
+    /*La fonction VOID ne contient pas de return (sinon déclenche un Warning)*/
+    if(graph->get_type() == Type::VOID)                                       
     {
         std::cerr << "warning: 'return' in function '" << graph->get_name() << "' returning void" << std::endl;
     }
@@ -93,7 +131,7 @@ antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
     block->add_instruction(Operation::ret, Type::INT_64, {dest});
 
     // exit
-    block->exit_true = graph->end_bb;
+    block->exit_true = graph->end_bb;                                          
 
     auto garbage = new BasicBlock(graph);
     graph->add_block(garbage);
@@ -102,10 +140,18 @@ antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
     return 0;
 }
 
+
+
+/**
+ * C'est le Visiteur pour les délarations des varaibles globales
+ * TO DO Fatih
+*/
+
 antlrcpp::Any Visitor::visitDeclaration_global(ifccParser::Declaration_globalContext* ctx)
 {
     auto type = Symbol::type_from_string(ctx->TYPE()->getText());
 
+    /*Les varaibles de type void ne sont pas acceptées*/
     if(type == Type::VOID)
     {
         throw std::invalid_argument("Visitor::visitDeclaration_global: can't have void variable");
@@ -115,6 +161,7 @@ antlrcpp::Any Visitor::visitDeclaration_global(ifccParser::Declaration_globalCon
     {
         auto length = declaration->array_length() ? reduce_constant(declaration->array_length()->constant()).get_value() : 1;
 
+        /*Si un tableau est déclaré, sa taille ne doit pas etre inferieure à 1*/
         if(length < 1)
         {
             throw std::invalid_argument("Visitor::visitDeclaration_stmt: array length can't be less than 1");
@@ -126,10 +173,18 @@ antlrcpp::Any Visitor::visitDeclaration_global(ifccParser::Declaration_globalCon
     return 0;
 }
 
+
+
+/**
+ * C'est le Visiteur pour les délarations des varaibles 
+ * TO DO Fatih
+*/
+
 antlrcpp::Any Visitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext* ctx)
 {
     auto type = Symbol::type_from_string(ctx->TYPE()->getText());
 
+    /*Les varaibles de type void ne sont pas acceptées*/
     if(type == Type::VOID)
     {
         throw std::invalid_argument("Visitor::visitDeclaration_stmt: can't have void variable");
@@ -142,6 +197,7 @@ antlrcpp::Any Visitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext
 
         auto length = declaration->array_length() ? reduce_constant(declaration->array_length()->constant()).get_value() : 1;
 
+        /*Si un tableau est déclaré, sa taille ne doit pas etre inferieure à 1*/
         if(length < 1)
         {
             throw std::invalid_argument("Visitor::visitDeclaration_stmt: array length can't be less than 1");
@@ -178,6 +234,13 @@ antlrcpp::Any Visitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext
 
     return 0;
 }
+
+
+
+/**
+ * C'est le Visiteur pour les affectations à une Lvalue quelconque
+ * TO DO Fatih
+*/
 
 antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
 {
@@ -222,6 +285,14 @@ antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
     return 0;
 }
 
+
+
+/**
+ * C'est le Visiteur pour d'un Bloc
+ * Oe le Scope
+ * TO DO Fatih
+*/
+
 antlrcpp::Any Visitor::visitBlock_stmt(ifccParser::Block_stmtContext* ctx)
 {
     open_scope();
@@ -230,6 +301,8 @@ antlrcpp::Any Visitor::visitBlock_stmt(ifccParser::Block_stmtContext* ctx)
 
     return 0;
 }
+
+
 
 antlrcpp::Any Visitor::visitAssignment(ifccParser::AssignmentContext* ctx)
 {
@@ -258,6 +331,12 @@ antlrcpp::Any Visitor::visitAssignment(ifccParser::AssignmentContext* ctx)
 
     return 0;
 }
+
+
+/**
+ * C'est le Visiteur pour les affectations des expressions
+ * TO DO Fatih
+*/
 
 antlrcpp::Any Visitor::visitExprAssignment(ifccParser::ExprAssignmentContext* ctx)
 {

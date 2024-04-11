@@ -5,13 +5,13 @@ axiom : prog EOF;
 prog : global*;
 
 global : 
-    return_type IDENTIFIER '(' (TYPE declaration (',' TYPE declaration)* )? ')' block     # function_global
+    return_type IDENTIFIER '(' (TYPE declaration (',' TYPE declaration)* )? ')' block          # function_global
     | TYPE declaration (',' declaration)* ';'                                                  # declaration_global
     ;
 
 instruction : 
     'return' expression ';'                                                                     # return_stmt
-    | TYPE declaration (',' declaration)* ';'                                              # declaration_stmt
+    | TYPE declaration (',' declaration)* ';'                                                   # declaration_stmt
     | assignment ';'                                                                            # assignment_stmt
     | function_call ';'                                                                         # function_call_stmt
     | 'break' ';'                                                                               # break_stmt

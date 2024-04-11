@@ -17,3 +17,4 @@ ret42.c
 demo/
 ret42.s
 **/testfiles/main
+config.mk

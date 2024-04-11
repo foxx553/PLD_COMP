@@ -11,7 +11,7 @@
 
 class BasicBlock;
 
-/** The instructions themselves -- feel free to subclass instead */
+
 enum class Operation
 {
     ldconst, // a = 5

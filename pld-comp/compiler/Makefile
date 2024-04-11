@@ -76,3 +76,8 @@ gui:
 clean:
 	rm -rf build generated
 	rm -f ifcc
+
+##########################################
+# run tests
+test:
+	../tests/ifcc-test.py ../tests/testfiles

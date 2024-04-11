@@ -1,5 +1,9 @@
 #include "BackendASM.hpp"
 
+/**
+ * Destructeur
+ */
+
 BackendASM::~BackendASM()
 {
 }
@@ -36,6 +40,13 @@ void BackendASM::begin()
     }
 }
 
+
+
+/**
+ * Génère l'étiquette et le prologue associé au graphe 
+ * @param cfg le graphe à traduire en assembleur
+ */
+
 void BackendASM::graph_begin(CFG* cfg)
 {
     o << std::endl
@@ -49,6 +60,12 @@ void BackendASM::graph_begin(CFG* cfg)
     o << "\tsubq $" << size << ", %rsp" << std::endl;
 }
 
+
+/**
+ * Génère l'épilogue associée au graphe, puis effectue le ret
+ * @param cfg le graphe à traduire en assembleur
+ */
+
 void BackendASM::graph_end(CFG* cfg)
 {
     o << "\t# epilogue" << std::endl;
@@ -57,10 +74,23 @@ void BackendASM::graph_end(CFG* cfg)
     o << "\tret" << std::endl;
 }
 
+
+/**
+ * Génère l'étiquette du BasicBlock bb
+ * @param bb le BasicBlock
+ */
+
 void BackendASM::block_begin(BasicBlock* bb)
 {
     o << "." << bb->get_name() << ":" << std::endl;
 }
+
+
+/**
+ * Génère le code assembleur d'un saut conditionnel
+ * Ceci notamment pour la condition d'un if ou un while
+ * @param bb le BasicBlock
+ */
 
 void BackendASM::block_jump_conditional(BasicBlock* bb)
 {
@@ -70,21 +100,52 @@ void BackendASM::block_jump_conditional(BasicBlock* bb)
     o << "\tjmp ." << bb->exit_true->get_name() << std::endl;
 }
 
+
+/**
+ * Génère le code assembleur d'un saut inconditionnel vers la sortie du BasicBlock bb
+ * @param bb le BasicBlock
+ */
+
 void BackendASM::block_jump_simple(BasicBlock* bb)
 {
     o << "\tjmp ." << bb->exit_true->get_name() << std::endl;
 }
+
+
+/**
+ * Génère le code assembleur d'une affectation de constante (var = const;)
+ * @param instr : l'instruction à traduire
+ * instr->get_param(0) : la variable
+ * instr->get_param(1) : la constante
+ */
 
 void BackendASM::instruction_ldconst(IRInstr* instr)
 {
     o << "\tmovq " << symbol(instr->get_param(1)) << ", " << symbol(instr->get_param(0)) << std::endl;
 }
 
+
+/**
+ * Génère le code assembleur d'une affectation de varaible (var1 = var2;)
+ * @param instr : l'instruction à traduire
+ * instr->get_param(0) : la destination, var1
+ * instr->get_param(1) : la source, var2
+ */
+
 void BackendASM::instruction_copy(IRInstr* instr)
 {
     o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;
     o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
 }
+
+
+/**
+ * Génère le code assembleur d'une addition (var1 = var2 + var3;)
+ * @param instr : l'instruction à traduire
+ * instr->get_param(0) : var1
+ * instr->get_param(1) : var2
+ * instr->get_param(2) : var3
+ */
 
 void BackendASM::instruction_add(IRInstr* instr)
 {
@@ -93,12 +154,23 @@ void BackendASM::instruction_add(IRInstr* instr)
     o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
 }
 
+
+/**
+ * Génère le code assembleur d'une opération de soustraction (var1 = var2 - var3;)
+ * @param instr : l'instruction à traduire
+ * instr->get_param(0) : var1
+ * instr->get_param(1) : var2
+ * instr->get_param(2) : var3
+ */
+
 void BackendASM::instruction_sub(IRInstr* instr)
 {
     o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;
     o << "\tsubq " << symbol(instr->get_param(2)) << ", %rax" << std::endl;
     o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
 }
+
+
 
 void BackendASM::instruction_bxor(IRInstr* instr)
 {
@@ -107,20 +179,14 @@ void BackendASM::instruction_bxor(IRInstr* instr)
     o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
 }
 
-void BackendASM::instruction_bor(IRInstr* instr)
-{
-    o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;
-    o << "\torq " << symbol(instr->get_param(2)) << ", %rax" << std::endl;
-    o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
-}
 
-void BackendASM::instruction_band(IRInstr* instr)
-{
-    o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;
-    o << "\tandq " << symbol(instr->get_param(2)) << ", %rax" << std::endl;
-    o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
-}
-
+/**
+ * Génère le code assembleur d'une opération de multiplication (var1 = var2 * var3;)
+ * @param instr : l'instruction à traduire
+ * instr->get_param(0) : var1
+ * instr->get_param(1) : var2
+ * instr->get_param(2) : var3
+ */
 
 void BackendASM::instruction_mul(IRInstr* instr)
 {
@@ -128,6 +194,15 @@ void BackendASM::instruction_mul(IRInstr* instr)
     o << "\tmulq " << symbol(instr->get_param(2)) << std::endl;
     o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
 }
+
+
+/**
+ * Génère le code assembleur d'une opération de division (var1 = var2 / var3;)
+ * @param instr : l'instruction à traduire
+ * instr->get_param(0) : var1
+ * instr->get_param(1) : var2
+ * instr->get_param(2) : var3
+ */
 
 void BackendASM::instruction_div(IRInstr* instr)
 {
@@ -137,6 +212,15 @@ void BackendASM::instruction_div(IRInstr* instr)
     o << "\tmovl %eax, " << symbol(instr->get_param(0)) << std::endl;
 }
 
+
+/**
+ * Génère le code assembleur d'une opération de modulo (var1 = var2 % var3;)
+ * @param instr : l'instruction à traduire
+ * instr->get_param(0) : var1
+ * instr->get_param(1) : var2
+ * instr->get_param(2) : var3
+ */
+
 void BackendASM::instruction_mod(IRInstr* instr)
 {
     o << "\tmovl " << symbol(instr->get_param(1)) << ", %eax" << std::endl;
@@ -145,10 +229,36 @@ void BackendASM::instruction_mod(IRInstr* instr)
     o << "\tmovl %edx, " << symbol(instr->get_param(0)) << std::endl;
 }
 
+
+
+void BackendASM::instruction_bor(IRInstr* instr)
+{
+    o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;
+    o << "\torq " << symbol(instr->get_param(2)) << ", %rax" << std::endl;
+    o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
+}
+
+
+
+void BackendASM::instruction_band(IRInstr* instr)
+{
+    o << "\tmovq " << symbol(instr->get_param(1)) << ", %rax" << std::endl;
+    o << "\tandq " << symbol(instr->get_param(2)) << ", %rax" << std::endl;
+    o << "\tmovq %rax, " << symbol(instr->get_param(0)) << std::endl;
+}
+
+
+/**
+ * Génère le code assembleur d'une instruction ret
+ * @param instr : l'instruction à traduire
+ */
+
 void BackendASM::instruction_ret(IRInstr* instr)
 {
     o << "\tmovq " << symbol(instr->get_param(0)) << ", %rax" << std::endl;
 }
+
+
 
 void BackendASM::instruction_rmem(IRInstr* instr)
 {
@@ -157,12 +267,23 @@ void BackendASM::instruction_rmem(IRInstr* instr)
     o << "\tmovq %r10, " << symbol(instr->get_param(0)) << std::endl;
 }
 
+
+
 void BackendASM::instruction_wmem(IRInstr* instr)
 {
     o << "\tmovq " << symbol(instr->get_param(0)) << ", %rax" << std::endl;
     o << "\tmovq " << symbol(instr->get_param(1)) << ", %r10" << std::endl;
     o << "\tmovq %r10, (%rax)" << std::endl;
 }
+
+
+/**
+ * Génère le code assembleur d'un call pour une fonction (call var1 label (var2, var3...varn))
+ * @param instr : l'instruction à traduire
+ * instr->get_param(0): le CFG de la fonction, et get_name ernvoie le nom de la fonction
+ * instr->get_param(1) :
+ * instr->get_param(i) avec i>1: les paramètres de la fonction
+ */
 
 void BackendASM::instruction_call(IRInstr* instr)
 {
@@ -177,6 +298,15 @@ void BackendASM::instruction_call(IRInstr* instr)
     o << "\tmovq %rax, " << symbol(instr->get_param(1)) << std::endl;
 }
 
+
+/**
+ * Génère le code assembleur d'une comparaison d'égalité (var1 = (var2==var3);)
+ * @param instr : l'instruction à traduire
+ * instr->get_param(0) : var1
+ * instr->get_param(1) : var2
+ * instr->get_param(2) : var3
+ */
+
 void BackendASM::instruction_cmp_eq(IRInstr* instr)
 {
     o << "\tmovl " << symbol(instr->get_param(1)) << ", %eax" << std::endl;
@@ -186,6 +316,15 @@ void BackendASM::instruction_cmp_eq(IRInstr* instr)
     o << "\tmovl %eax, " << symbol(instr->get_param(0)) << std::endl;
 }
 
+
+/**
+ * Génère le code assembleur d'une comparaison de supériorité (var1 = (var2>var3);)
+ * @param instr : l'instruction à traduire
+ * instr->get_param(0) : var1
+ * instr->get_param(1) : var2
+ * instr->get_param(2) : var3
+ */
+
 void BackendASM::instruction_cmp_lt(IRInstr* instr)
 {
     o << "\tmovl " << symbol(instr->get_param(1)) << ", %eax" << std::endl;
@@ -194,6 +333,8 @@ void BackendASM::instruction_cmp_lt(IRInstr* instr)
     o << "\tmovzbl %al, %eax" << std::endl;
     o << "\tmovl %eax, " << symbol(instr->get_param(0)) << std::endl;
 }
+
+
 
 std::string BackendASM::symbol(const Symbol& symbol)
 {

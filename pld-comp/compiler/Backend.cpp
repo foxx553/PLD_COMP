@@ -1,8 +1,16 @@
 #include "Backend.hpp"
 
+/**
+ * Constructeur
+ */
+
 Backend::Backend(IR& ir, std::ostream& o) : ir(ir), o(o)
 {
 }
+
+/**
+ * Destructeur
+ */
 
 Backend::~Backend()
 {
@@ -17,6 +25,12 @@ void Backend::generate()
         graph(cfg);
     }
 }
+
+
+/**
+ * Parcours le graphe CFG, à chaque BasciBlock, fait un appel à la méthode Backend::block, pour traduire les instructions en asssembleur
+ * @param cfg le graphe à traduire en assembleur
+ */
 
 void Backend::graph(CFG* cfg)
 {
@@ -41,6 +55,12 @@ void Backend::graph(CFG* cfg)
     }
 }
 
+
+/**
+ * Permet l'ecriture en code assembleur de chaque instructions d'un BasicBlock
+ * @param bb le BasicBlock qui contient les instructions à traduire en assembleur
+ */
+
 void Backend::block(BasicBlock* bb)
 {
     block_begin(bb);
@@ -50,6 +70,14 @@ void Backend::block(BasicBlock* bb)
         instruction(instr);
     }
 }
+
+
+/**
+ * Permet l'ecriture d'une instruction en code assembleur
+ * @param instr l'instructions à traduire en assembleur
+ * La classe IRInstr contient un attribut Operation
+ * C'est sur la base du type d'opération que la traduction en assembleur se fait
+ */
 
 void Backend::instruction(IRInstr* instr)
 {

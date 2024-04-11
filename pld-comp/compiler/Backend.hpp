@@ -3,6 +3,14 @@
 #include "CFG.hpp"
 #include <ostream>
 
+/**
+ * Class Backend, qui va servir de support pour le reciblage vers ASM et ARM.
+ * Les Class BackendARM et BackASM vont hérité de cette classe.
+ * Attributs
+ * IR : vector de CFG
+ * o : sortie à afficher à l'utlisateur
+ */
+
 class Backend
 {
 public:

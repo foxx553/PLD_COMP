@@ -14,6 +14,11 @@
 
  */
 
+
+/**
+ * Une IR est un ensemble (vector) de CFG
+ */
+
 struct IR
 {
     std::vector<CFG*> graphs;
@@ -37,7 +42,7 @@ public:
 
     static bool is_standard_function(const std::string& name, int& params);
 
-    // basic block management
+    /*basic block management*/ 
     const std::vector<BasicBlock*>& get_blocks() const;
     void                            add_block(BasicBlock* bb);
     std::string                     block_name();

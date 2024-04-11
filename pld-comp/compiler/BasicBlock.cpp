@@ -26,7 +26,7 @@ BasicBlock::~BasicBlock()
 
 
 /**
- * Renvoie l'etiquette du BasicBlock name = etiquette)
+ * Renvoie l'etiquette du BasicBlock (name = etiquette)
  */
 
 const std::string& BasicBlock::get_name() const

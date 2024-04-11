@@ -16,13 +16,19 @@ We would like to thank our teachers, Ms. A. N. Rocher and Mr. F. Dupont de Dinec
 
 ⚠️ The installation process has been tested for Ubuntu and MacOS only.
 
-#### ANTLR installation
+#### Prerequisites
+
+Before building your compiler, you should install antlr using your distribution's package manager, or by running the provided shell script: `install-antlr.sh`. 
 
 -   For Ubuntu : `sudo apt install antlr4 libantlr4-runtime-dev default-jdk`
 -   Windows : use WSL2
--   For every other linux distros : execute the "pld-comp/install-antlr.sh" file
+-   For every other linux distros : execute the `pld-comp/install-antlr.sh` file
 
 #### Build
+
+`Makefile` contains the build logic. 
+
+The Makefile requires a config.mk file that defines several variables (ANTLR, ANTLRJAR, ANTLRINC and ANTLRLIB) containing the path of your ANTLR installation. 
 
 Create a config.mk file in your compiler folder with the paths to ANTLR. Here is an example :
 ```
@@ -34,6 +40,7 @@ ANTLR=antlr4
 ```
 
 Run `make` to build the compiler.
+
 Run `make test` to run the test files (this requires python to be installed).
 
 ## Authors

@@ -96,8 +96,6 @@ void BackendARM::instruction_mul(IRInstr* instr)
     o << "\tstr w8, [sp, #" << symbol(instr->get_param(0)) << "]" << std::endl;
 }
 
-
-
 void BackendARM::instruction_div(IRInstr* instr)
 {
     o << "\tldr w8, [sp, #" << symbol(instr->get_param(1)) << "]" << std::endl;
@@ -142,7 +140,7 @@ void BackendARM::instruction_call(IRInstr* instr)
 
     for(int i = 1; i < nb_params && i < 4; i++)
     {
-        o << "\tldr " << registres[i - 1] << ", [sp, #" <<  symbol(instr->get_param(i)) << "]" << std::endl;
+        o << "\tldr " << registres[i - 1] << ", [sp, #" << symbol(instr->get_param(i)) << "]" << std::endl;
     }
     o << "\tbl _" << (instr->get_param(0)).get_name() << std::endl;
 }

@@ -471,9 +471,29 @@ antlrcpp::Any Visitor::visitExprUnaire(ifccParser::ExprUnaireContext* ctx)
 }
 
 
+
+/**
+ * Retrouve un graphe CFG à partir de son nom(étiquette)
+ * @param name : le nom du graphe que l'on cherche
+*/
+
+CFG* Visitor::find_graph(const std::string& name) const
+{
+    for(auto graph: graphs)
+    {
+        if(graph->get_name() == name)
+        {
+            return graph;
+        }
+    }
+
+    return nullptr;
+}
+
+
+
 /**
  * C'est le Visiteur pour l'appel des fonctions
- * A partir du nom de la fonction, on recherche le graphe CFG correspondant
 */
 
 antlrcpp::Any Visitor::visitExprFunction(ifccParser::ExprFunctionContext* ctx)
@@ -482,7 +502,8 @@ antlrcpp::Any Visitor::visitExprFunction(ifccParser::ExprFunctionContext* ctx)
     auto* block = graph->current_bb;
     auto  name = ctx->function_call()->IDENTIFIER()->getText();
 
-    auto target = find_graph(name);                                             //Recherche de la fonction grace à son nom
+    /*A partir du nom de la fonction, on recherche le graphe CFG correspondant*/
+    auto target = find_graph(name);                                             
 
     int target_params;
     if(!CFG::is_standard_function(name, target_params))
@@ -507,6 +528,10 @@ antlrcpp::Any Visitor::visitExprFunction(ifccParser::ExprFunctionContext* ctx)
 
 
 
+/**
+ * C'est le Visiteur pour les appels de fonctions
+ * 
+*/
 
 antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
 {
@@ -514,10 +539,12 @@ antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
     auto* block = graph->current_bb;
     auto  name = ctx->IDENTIFIER()->getText();
 
+    /*A partir du nom de la fonction, on recherche le graphe CFG correspondant*/
     auto target = find_graph(name);
 
     int target_params;
 
+    /*Vérifie si la fonction existe */
     if(target)
     {
         target_params = target->get_params().size();
@@ -548,6 +575,16 @@ antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
     return 0;
 }
 
+
+
+/**
+ * C'est le Visiteur pour la boucle
+ * On crée un BasicBlock pour la condition de la boucle et on empile le BasicBlock dans loops
+ * La pile loops nous permet d'implémenter le break et le continue
+ * On visite l'intérieur de la boucle (pour créer d'autres BasicBlock)
+ * A la fin, on crée un BasicBlock pour la sortie de la boucle et on dépile loops
+*/
+
 antlrcpp::Any Visitor::visitLoop_stmt(ifccParser::Loop_stmtContext* ctx)
 {
     // Getting current CFG
@@ -562,7 +599,7 @@ antlrcpp::Any Visitor::visitLoop_stmt(ifccParser::Loop_stmtContext* ctx)
     auto condition_begin_bb = new BasicBlock(graph);
     graph->add_block(condition_begin_bb);
 
-    // Register loop
+    // Enregistre la loop et sa sortie(exit_false)
     loops.push(std::make_pair(condition_begin_bb, out_bb));
 
     // Branching the previous block to the 'while' condition
@@ -597,6 +634,73 @@ antlrcpp::Any Visitor::visitLoop_stmt(ifccParser::Loop_stmtContext* ctx)
 
     return 0;
 }
+
+
+
+/**
+ * C'est le Visiteur pour l'instruction break
+ * Quand on entre dans une boucle, le BasicBlock "condition" de la boucle est empilé dans la pile loops
+ * Si un break est rencontré, on fait un saut vers le exit_false de la tete de pile
+*/
+
+antlrcpp::Any Visitor::visitBreak_stmt(ifccParser::Break_stmtContext* ctx)
+{
+    //La pile loops est vide, alors le break n'est pas un une boucle (erreur)
+    if(loops.empty())
+    {
+        throw std::invalid_argument("Visitor::Break_stmtContext: no loop to break");
+    }
+
+    // Getting current CFG
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    // exit
+    block->exit_true = loops.top().second;
+
+    auto garbage = new BasicBlock(graph);
+    graph->add_block(garbage);
+    graph->current_bb = garbage;
+
+    return 0;
+}
+
+
+
+/**
+ * C'est le Visiteur pour l'instruction continue
+ * Quand on entre dans une boucle, le BasicBlock "condition" de la boucle est empilé dans la pile loops
+ * Si un continue est rencontré, on fait un saut vers la tete de pile
+*/
+
+antlrcpp::Any Visitor::visitContinue_stmt(ifccParser::Continue_stmtContext* ctx)
+{
+    //La pile loops est vide, alors le continue n'est pas une boucle (erreur)
+    if(loops.empty())
+    {
+        throw std::invalid_argument("Visitor::visitContinue_stmt: no loop to continue");
+    }
+
+    // Getting current CFG
+    auto* graph = graphs.back();
+    auto* block = graph->current_bb;
+
+    // exit
+    block->exit_true = loops.top().first;
+
+    auto garbage = new BasicBlock(graph);
+    graph->add_block(garbage);
+    graph->current_bb = garbage;
+
+    return 0;
+}
+
+
+
+/**
+ * C'est le Visiteur pour les conditions de if/boucle
+ * TO DO Fatih
+*/
 
 antlrcpp::Any Visitor::visitCondition_stmt(ifccParser::Condition_stmtContext* ctx)
 {
@@ -671,6 +775,11 @@ antlrcpp::Any Visitor::visitCondition_stmt(ifccParser::Condition_stmtContext* ct
     return 0;
 }
 
+
+/**
+ * TO DO Fatih
+*/
+
 antlrcpp::Any Visitor::visitExprAnd(ifccParser::ExprAndContext* ctx)
 {
     // Get results of left and right
@@ -679,6 +788,12 @@ antlrcpp::Any Visitor::visitExprAnd(ifccParser::ExprAndContext* ctx)
 
     return 0;
 }
+
+
+
+/**
+ * TO DO Fatih
+*/
 
 antlrcpp::Any Visitor::visitExprOr(ifccParser::ExprOrContext* ctx)
 {
@@ -689,6 +804,12 @@ antlrcpp::Any Visitor::visitExprOr(ifccParser::ExprOrContext* ctx)
     return 0;
 }
 
+
+
+/**
+ * TO DO Fatih
+*/
+
 antlrcpp::Any Visitor::visitExprNot(ifccParser::ExprNotContext* ctx)
 {
     // Get value
@@ -697,6 +818,12 @@ antlrcpp::Any Visitor::visitExprNot(ifccParser::ExprNotContext* ctx)
 
     return 0;
 }
+
+
+
+/**
+ * TO DO Fatih
+*/
 
 antlrcpp::Any Visitor::visitExprCmp(ifccParser::ExprCmpContext* ctx)
 {
@@ -764,6 +891,12 @@ antlrcpp::Any Visitor::visitExprCmp(ifccParser::ExprCmpContext* ctx)
     return 0;
 }
 
+
+
+/**
+ * TO DO Fatih
+*/
+
 void Visitor::reduce_and()
 {
     // Getting current CFG
@@ -811,6 +944,12 @@ void Visitor::reduce_and()
     block->exit_true = gauche_bb;
     graph->current_bb = out_bb;
 }
+
+
+
+/**
+ * TO DO Fatih
+*/
 
 void Visitor::reduce_or()
 {
@@ -860,6 +999,12 @@ void Visitor::reduce_or()
     graph->current_bb = out_bb;
 }
 
+
+
+/**
+ * TO DO Fatih
+*/
+
 void Visitor::reduce_not()
 {
     // Getting current CFG
@@ -901,6 +1046,12 @@ void Visitor::reduce_not()
     graph->current_bb = out_bb;
 }
 
+
+
+/**
+ * TO DO Fatih
+*/
+
 const Symbol& Visitor::pop_symbol()
 {
     auto*       graph = graphs.back();
@@ -909,6 +1060,12 @@ const Symbol& Visitor::pop_symbol()
     return value;
 }
 
+
+
+/**
+ * TO DO Fatih
+*/
+
 void Visitor::open_scope()
 {
     auto* scope = new Scope(current_scope);
@@ -916,65 +1073,22 @@ void Visitor::open_scope()
     current_scope = scope;
 }
 
+
+
+/**
+ * TO DO Fatih
+*/
+
 void Visitor::close_scope()
 {
     current_scope = current_scope->get_parent();
 }
 
-antlrcpp::Any Visitor::visitBreak_stmt(ifccParser::Break_stmtContext* ctx)
-{
-    if(loops.empty())
-    {
-        throw std::invalid_argument("Visitor::Break_stmtContext: no loop to break");
-    }
 
-    // Getting current CFG
-    auto* graph = graphs.back();
-    auto* block = graph->current_bb;
 
-    // exit
-    block->exit_true = loops.top().second;
-
-    auto garbage = new BasicBlock(graph);
-    graph->add_block(garbage);
-    graph->current_bb = garbage;
-
-    return 0;
-}
-
-antlrcpp::Any Visitor::visitContinue_stmt(ifccParser::Continue_stmtContext* ctx)
-{
-    if(loops.empty())
-    {
-        throw std::invalid_argument("Visitor::visitContinue_stmt: no loop to continue");
-    }
-
-    // Getting current CFG
-    auto* graph = graphs.back();
-    auto* block = graph->current_bb;
-
-    // exit
-    block->exit_true = loops.top().first;
-
-    auto garbage = new BasicBlock(graph);
-    graph->add_block(garbage);
-    graph->current_bb = garbage;
-
-    return 0;
-}
-
-CFG* Visitor::find_graph(const std::string& name) const
-{
-    for(auto graph: graphs)
-    {
-        if(graph->get_name() == name)
-        {
-            return graph;
-        }
-    }
-
-    return nullptr;
-}
+/**
+ * TO DO Fatih
+*/
 
 Symbol Visitor::reduce_constant(ifccParser::ConstantContext* ctx)
 {

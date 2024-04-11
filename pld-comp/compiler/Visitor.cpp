@@ -529,22 +529,30 @@ antlrcpp::Any Visitor::visitExprUnaire(ifccParser::ExprUnaireContext* ctx)
     return 0;
 }
 
+
+/**
+ * C'est le Visiteur pour l'appel des fonctions
+ * A partir du nom de la fonction, on recherche le graphe CFG correspondant
+*/
+
 antlrcpp::Any Visitor::visitExprFunction(ifccParser::ExprFunctionContext* ctx)
 {
     auto* graph = graphs.back();
     auto* block = graph->current_bb;
     auto  name = ctx->function_call()->IDENTIFIER()->getText();
 
-    auto target = find_graph(name);
+    auto target = find_graph(name);                                             //Recherche de la fonction grace à son nom
 
     int target_params;
     if(!CFG::is_standard_function(name, target_params))
     {
+        /*Vérifie si la fonction existe */
         if(!target)
         {
             throw std::invalid_argument("Visitor::visitExprFunction: target function " + name + " doesn't exist");
         }
 
+        /*La fonction void ne doit pas etre appelée dans une affectation*/
         if(target->get_type() == Type::VOID)
         {
             throw std::invalid_argument("Visitor::visitExprFunction: target function " + name + " returns void");
@@ -555,6 +563,9 @@ antlrcpp::Any Visitor::visitExprFunction(ifccParser::ExprFunctionContext* ctx)
 
     return 0;
 }
+
+
+
 
 antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
 {

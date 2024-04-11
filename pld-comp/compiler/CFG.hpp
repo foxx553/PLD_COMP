@@ -4,51 +4,43 @@
 #include "IRInstr.hpp"
 #include "Scope.hpp"
 
-/** The class for the control flow graph, also includes the symbol table */
-
-/* A few important comments:
-     The entry block is the one with the same label as the AST function name.
-       (it could be the first of bbs, or it could be defined by an attribute value)
-     The exit block is the one with both exit pointers equal to nullptr.
-     (again it could be identified in a more explicit way)
-
- */
-
-
 /**
- * Une IR est un ensemble (vector) de CFG
+ * Une IR est un ensemble de CFG et un scope global
  */
-
 struct IR
 {
     std::vector<CFG*> graphs;
     Scope*            global_scope;
 };
 
+/**
+ * CFG : Control Flow Graph
+ * Un CFG est un ensemble de BasicBlock
+ * Représente une fonction
+ */
 class CFG
 {
 public:
     CFG(const std::string& name, Type type);
     virtual ~CFG();
 
-    const std::string&  get_name() const;
-    int                 next_symbol_offset(Type type, int length = 1);
-    int                 get_symbol_offset() const;
-    const Symbol&       create_temp(Scope* scope, Type type, bool pointer = false);
-    const Symbol&       create_temp(Scope* scope, const Symbol& symbol);
-    void                add_param(Symbol param);
-    std::vector<Symbol> get_params() const;
-    const Type          get_type() const;
+    const std::string&  get_name() const;                                           ///< get the name of the CFG
+    int                 next_symbol_offset(Type type, int length = 1);              ///< add the size of a symbol to the symbol offset
+    int                 get_symbol_offset() const;                                  ///< get the symbol offset
+    const Symbol&       create_temp(Scope* scope, Type type, bool pointer = false); ///< create a temporary symbol
+    const Symbol&       create_temp(Scope* scope, const Symbol& symbol);            ///< create a temporary symbol
+    void                add_param(Symbol param);                                    ///< add a param to the CFG
+    std::vector<Symbol> get_params() const;                                         ///< get the params of the CFG
+    const Type          get_type() const;                                           ///< get the return type of the CFG
+    static bool         is_standard_function(const std::string& name, int& params); ///< check if a function is a standard function
 
-    static bool is_standard_function(const std::string& name, int& params);
-
-    /*basic block management*/ 
-    const std::vector<BasicBlock*>& get_blocks() const;
-    void                            add_block(BasicBlock* bb);
-    std::string                     block_name();
-    BasicBlock*                     current_bb;
-    BasicBlock*                     begin_bb;
-    BasicBlock*                     end_bb;
+    /* Gestions des BasicBlock */
+    const std::vector<BasicBlock*>& get_blocks() const;        ///< get the basic blocks
+    void                            add_block(BasicBlock* bb); ///< add a basic block
+    std::string                     block_name();              ///< generate a new block name
+    BasicBlock*                     current_bb;                ///< current basic block
+    BasicBlock*                     begin_bb;                  ///< begin basic block
+    BasicBlock*                     end_bb;                    ///< end basic block
 
 protected:
     std::vector<BasicBlock*> blocks;        ///< basic blocks

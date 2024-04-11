@@ -11,7 +11,6 @@
 
 class BasicBlock;
 
-
 enum class Operation
 {
     ldconst, // a = 5
@@ -32,24 +31,23 @@ enum class Operation
     ret      // return a
 };
 
-//! The class for one 3-address instruction
+/**
+ * Class IRInstr, qui représente une instruction en code intermédiaire
+ */
 class IRInstr
 {
 
 public:
     IRInstr(BasicBlock* block, Operation op, Type type, const std::vector<Symbol>& params);
 
-    const Symbol&              get_param(int i) const;
-    const std::vector<Symbol>& get_params() const;
-    const Operation            get_operation() const;
-    const Type                 get_type() const;
+    const Symbol&              get_param(int i) const; // Gets the ith parameter
+    const std::vector<Symbol>& get_params() const;     // Gets all parameters
+    const Operation            get_operation() const;  // Gets the operation type
+    const Type                 get_type() const;       // Gets the result type
 
 private:
     BasicBlock*         block;  ///< Associated block
     Operation           op;     ///< Operation
     Type                type;   ///< Operand types
     std::vector<Symbol> params; ///< Parameters
-
-    /**< For 3-op instrs: d, x, y; for ldconst: d, c;  For call: label, d, params;  for wmem and rmem: choose yourself */
-    // if you subclass IRInstr, each IRInstr subclass has its parameters and the previous (very important) comment becomes useless: it would be a better design.
 };

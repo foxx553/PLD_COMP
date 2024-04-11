@@ -26,7 +26,6 @@ void Backend::generate()
     }
 }
 
-
 /**
  * Parcours le graphe CFG, à chaque BasciBlock, fait un appel à la méthode Backend::block, pour traduire les instructions en asssembleur
  * @param cfg le graphe à traduire en assembleur
@@ -55,7 +54,6 @@ void Backend::graph(CFG* cfg)
     }
 }
 
-
 /**
  * Permet l'ecriture en code assembleur de chaque instructions d'un BasicBlock
  * @param bb le BasicBlock qui contient les instructions à traduire en assembleur
@@ -65,12 +63,11 @@ void Backend::block(BasicBlock* bb)
 {
     block_begin(bb);
 
-    for(const auto& instr: bb->instrs)
+    for(const auto& instr: bb->get_instructions())
     {
         instruction(instr);
     }
 }
-
 
 /**
  * Permet l'ecriture d'une instruction en code assembleur

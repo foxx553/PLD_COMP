@@ -17,6 +17,7 @@ using namespace std;
 
 int main(int argn, const char** argv)
 {
+    // on gère les arguments
     std::string output;
 
     stringstream in;
@@ -36,6 +37,7 @@ int main(int argn, const char** argv)
         exit(1);
     }
 
+    // on parse le fichier
     ANTLRInputStream input(in.str());
 
     ifccLexer         lexer(&input);

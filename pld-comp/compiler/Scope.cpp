@@ -7,6 +7,10 @@ Scope::Scope(Scope* parent) : parent(parent)
 {
 }
 
+/**
+ * Destructeur
+ * Vérifie que toutes les variables déclarées dans le scope ont été utilisées
+*/
 Scope::~Scope()
 {
     for(auto [name, used]: used_symbols)

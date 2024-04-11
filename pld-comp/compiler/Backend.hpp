@@ -10,7 +10,6 @@
  * IR : vector de CFG
  * o : sortie à afficher à l'utlisateur
  */
-
 class Backend
 {
 public:
@@ -48,5 +47,5 @@ protected:
     virtual void instruction_cmp_lt(IRInstr* instr) = 0;
 
     IR&           ir;
-    std::ostream& o;
+    std::ostream& o; ///< stream de sortie
 };

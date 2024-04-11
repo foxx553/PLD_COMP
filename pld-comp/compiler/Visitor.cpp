@@ -2,20 +2,17 @@
 
 #include <iostream>
 
-
 /**
  * Constructeur
  */
-
 Visitor::Visitor() : current_scope(nullptr)
 {
 }
 
-
 /**
  * Destructeur
+ * On libère la mémoire allouée pour les graphes et les scopes
  */
-
 Visitor::~Visitor()
 {
     for(auto graph: graphs)
@@ -29,21 +26,15 @@ Visitor::~Visitor()
     }
 }
 
-
-/**
- * TO DO Fatih
-*/
 IR Visitor::get_ir()
 {
     return {graphs, scopes.front()};
 }
 
-
 /**
  * C'est le Visiteur de notre programme
  * Ce visiteur va permetre de parcourir le main et les différentes fonctions
-*/
-
+ */
 antlrcpp::Any Visitor::visitProg(ifccParser::ProgContext* ctx)
 {
     open_scope();
@@ -52,14 +43,6 @@ antlrcpp::Any Visitor::visitProg(ifccParser::ProgContext* ctx)
 
     return 0;
 }
-
-
-
-/**
- * C'est le Visiteur pour le main et les fonctions
- * Crée un nouveau graphe(CFG) à partir du nom et du type de retour de la fonction
- *TO DO Fatih 
-*/
 
 antlrcpp::Any Visitor::visitFunction_global(ifccParser::Function_globalContext* ctx)
 {
@@ -105,13 +88,11 @@ antlrcpp::Any Visitor::visitFunction_global(ifccParser::Function_globalContext* 
     return 0;
 }
 
-
-
 /**
  * C'est le Visiteur du return
  * 1- Ajoute l'instruction "ret" au current BasicBlock
  * 2- Relis la sortie du current BasicBlock au BasicBlock de fin du graphe
-*/
+ */
 
 antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
 {
@@ -123,7 +104,7 @@ antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
     auto dest = pop_symbol();
 
     /*La fonction VOID ne contient pas de return (sinon déclenche un Warning)*/
-    if(graph->get_type() == Type::VOID)                                       
+    if(graph->get_type() == Type::VOID)
     {
         std::cerr << "warning: 'return' in function '" << graph->get_name() << "' returning void" << std::endl;
     }
@@ -131,7 +112,7 @@ antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
     block->add_instruction(Operation::ret, Type::INT_64, {dest});
 
     // exit
-    block->exit_true = graph->end_bb;                                          
+    block->exit_true = graph->end_bb;
 
     auto garbage = new BasicBlock(graph);
     graph->add_block(garbage);
@@ -139,13 +120,6 @@ antlrcpp::Any Visitor::visitReturn_stmt(ifccParser::Return_stmtContext* ctx)
 
     return 0;
 }
-
-
-
-/**
- * C'est le Visiteur pour les délarations des varaibles globales
- * TO DO Fatih
-*/
 
 antlrcpp::Any Visitor::visitDeclaration_global(ifccParser::Declaration_globalContext* ctx)
 {
@@ -172,13 +146,6 @@ antlrcpp::Any Visitor::visitDeclaration_global(ifccParser::Declaration_globalCon
 
     return 0;
 }
-
-
-
-/**
- * C'est le Visiteur pour les délarations des varaibles 
- * TO DO Fatih
-*/
 
 antlrcpp::Any Visitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext* ctx)
 {
@@ -235,13 +202,6 @@ antlrcpp::Any Visitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext
     return 0;
 }
 
-
-
-/**
- * C'est le Visiteur pour les affectations à une Lvalue quelconque
- * TO DO Fatih
-*/
-
 antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
 {
     auto* graph = graphs.back();
@@ -285,14 +245,6 @@ antlrcpp::Any Visitor::visitLvalue(ifccParser::LvalueContext* ctx)
     return 0;
 }
 
-
-
-/**
- * C'est le Visiteur pour d'un Bloc
- * Oe le Scope
- * TO DO Fatih
-*/
-
 antlrcpp::Any Visitor::visitBlock_stmt(ifccParser::Block_stmtContext* ctx)
 {
     open_scope();
@@ -302,11 +254,9 @@ antlrcpp::Any Visitor::visitBlock_stmt(ifccParser::Block_stmtContext* ctx)
     return 0;
 }
 
-
 /**
  * C'est le Visiteur pour l'appel des fonctions
-*/
-
+ */
 antlrcpp::Any Visitor::visitAssignment(ifccParser::AssignmentContext* ctx)
 {
     this->visitChildren(ctx);
@@ -335,12 +285,6 @@ antlrcpp::Any Visitor::visitAssignment(ifccParser::AssignmentContext* ctx)
     return 0;
 }
 
-
-/**
- * C'est le Visiteur pour les affectations des expressions
- * TO DO Fatih
-*/
-
 antlrcpp::Any Visitor::visitExprAssignment(ifccParser::ExprAssignmentContext* ctx)
 {
     this->visitChildren(ctx);
@@ -358,12 +302,6 @@ antlrcpp::Any Visitor::visitExprAssignment(ifccParser::ExprAssignmentContext* ct
     return 0;
 }
 
-
-
-/**
- * TO DO Fatih
-*/
-
 antlrcpp::Any Visitor::visitExprConstante(ifccParser::ExprConstanteContext* ctx)
 {
     auto* graph = graphs.back();
@@ -377,12 +315,6 @@ antlrcpp::Any Visitor::visitExprConstante(ifccParser::ExprConstanteContext* ctx)
 
     return 0;
 }
-
-
-
-/**
- * TO DO Fatih
-*/
 
 antlrcpp::Any Visitor::visitExprLvalue(ifccParser::ExprLvalueContext* ctx)
 {
@@ -406,12 +338,6 @@ antlrcpp::Any Visitor::visitExprLvalue(ifccParser::ExprLvalueContext* ctx)
 
     return 0;
 }
-
-
-
-/**
- * TO DO Fatih
-*/
 
 antlrcpp::Any Visitor::visitExprAddSub(ifccParser::ExprAddSubContext* ctx)
 {
@@ -471,12 +397,6 @@ antlrcpp::Any Visitor::visitExprProduit(ifccParser::ExprProduitContext* ctx)
     return 0;
 }
 
-
-
-/**
- * TO DO Fatih
-*/
-
 antlrcpp::Any Visitor::visitExprUnaire(ifccParser::ExprUnaireContext* ctx)
 {
     visitChildren(ctx);
@@ -497,13 +417,10 @@ antlrcpp::Any Visitor::visitExprUnaire(ifccParser::ExprUnaireContext* ctx)
     return 0;
 }
 
-
-
 /**
  * Retrouve un graphe CFG à partir de son nom(étiquette)
  * @param name : le nom du graphe que l'on cherche
-*/
-
+ */
 CFG* Visitor::find_graph(const std::string& name) const
 {
     for(auto graph: graphs)
@@ -517,12 +434,9 @@ CFG* Visitor::find_graph(const std::string& name) const
     return nullptr;
 }
 
-
-
 /**
  * C'est le Visiteur pour l'appel des fonctions
-*/
-
+ */
 antlrcpp::Any Visitor::visitExprFunction(ifccParser::ExprFunctionContext* ctx)
 {
     auto* graph = graphs.back();
@@ -530,7 +444,7 @@ antlrcpp::Any Visitor::visitExprFunction(ifccParser::ExprFunctionContext* ctx)
     auto  name = ctx->function_call()->IDENTIFIER()->getText();
 
     /*A partir du nom de la fonction, on recherche le graphe CFG correspondant*/
-    auto target = find_graph(name);                                             
+    auto target = find_graph(name);
 
     int target_params;
     if(!CFG::is_standard_function(name, target_params))
@@ -553,13 +467,10 @@ antlrcpp::Any Visitor::visitExprFunction(ifccParser::ExprFunctionContext* ctx)
     return 0;
 }
 
-
-
 /**
  * C'est le Visiteur pour les appels de fonctions
- * 
-*/
-
+ *
+ */
 antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
 {
     auto* graph = graphs.back();
@@ -602,16 +513,13 @@ antlrcpp::Any Visitor::visitFunction_call(ifccParser::Function_callContext* ctx)
     return 0;
 }
 
-
-
 /**
  * C'est le Visiteur pour la boucle
  * On crée un BasicBlock pour la condition de la boucle et on empile le BasicBlock dans loops
  * La pile loops nous permet d'implémenter le break et le continue
  * On visite l'intérieur de la boucle (pour créer d'autres BasicBlock)
  * A la fin, on crée un BasicBlock pour la sortie de la boucle et on dépile loops
-*/
-
+ */
 antlrcpp::Any Visitor::visitLoop_stmt(ifccParser::Loop_stmtContext* ctx)
 {
     // Getting current CFG
@@ -637,7 +545,7 @@ antlrcpp::Any Visitor::visitLoop_stmt(ifccParser::Loop_stmtContext* ctx)
     this->visit(ctx->expression());
     auto condition_end_bb = graph->current_bb; // on récupère le "bloc out" de l'expression
 
-    condition_end_bb->test_symbol = pop_symbol();
+    condition_end_bb->set_test(pop_symbol());
 
     // 'while' block
     auto block_bb = new BasicBlock(graph);
@@ -662,17 +570,14 @@ antlrcpp::Any Visitor::visitLoop_stmt(ifccParser::Loop_stmtContext* ctx)
     return 0;
 }
 
-
-
 /**
  * C'est le Visiteur pour l'instruction break
  * Quand on entre dans une boucle, le BasicBlock "condition" de la boucle est empilé dans la pile loops
  * Si un break est rencontré, on fait un saut vers le exit_false de la tete de pile
-*/
-
+ */
 antlrcpp::Any Visitor::visitBreak_stmt(ifccParser::Break_stmtContext* ctx)
 {
-    //La pile loops est vide, alors le break n'est pas un une boucle (erreur)
+    // La pile loops est vide, alors le break n'est pas un une boucle (erreur)
     if(loops.empty())
     {
         throw std::invalid_argument("Visitor::Break_stmtContext: no loop to break");
@@ -692,17 +597,14 @@ antlrcpp::Any Visitor::visitBreak_stmt(ifccParser::Break_stmtContext* ctx)
     return 0;
 }
 
-
-
 /**
  * C'est le Visiteur pour l'instruction continue
  * Quand on entre dans une boucle, le BasicBlock "condition" de la boucle est empilé dans la pile loops
  * Si un continue est rencontré, on fait un saut vers la tete de pile
-*/
-
+ */
 antlrcpp::Any Visitor::visitContinue_stmt(ifccParser::Continue_stmtContext* ctx)
 {
-    //La pile loops est vide, alors le continue n'est pas une boucle (erreur)
+    // La pile loops est vide, alors le continue n'est pas une boucle (erreur)
     if(loops.empty())
     {
         throw std::invalid_argument("Visitor::visitContinue_stmt: no loop to continue");
@@ -721,13 +623,6 @@ antlrcpp::Any Visitor::visitContinue_stmt(ifccParser::Continue_stmtContext* ctx)
 
     return 0;
 }
-
-
-
-/**
- * C'est le Visiteur pour les conditions de if/boucle
- * TO DO Fatih
-*/
 
 antlrcpp::Any Visitor::visitCondition_stmt(ifccParser::Condition_stmtContext* ctx)
 {
@@ -757,7 +652,7 @@ antlrcpp::Any Visitor::visitCondition_stmt(ifccParser::Condition_stmtContext* ct
         this->visit(ctx->expression()[i]);
         condition_bb = graph->current_bb; // on récupère le "bloc out" de l'expression
 
-        condition_bb->test_symbol = pop_symbol();
+        condition_bb->set_test(pop_symbol());
 
         if(last_condition_bb)
         {
@@ -802,11 +697,6 @@ antlrcpp::Any Visitor::visitCondition_stmt(ifccParser::Condition_stmtContext* ct
     return 0;
 }
 
-
-/**
- * TO DO Fatih
-*/
-
 antlrcpp::Any Visitor::visitExprAnd(ifccParser::ExprAndContext* ctx)
 {
     // Get results of left and right
@@ -815,12 +705,6 @@ antlrcpp::Any Visitor::visitExprAnd(ifccParser::ExprAndContext* ctx)
 
     return 0;
 }
-
-
-
-/**
- * TO DO Fatih
-*/
 
 antlrcpp::Any Visitor::visitExprOr(ifccParser::ExprOrContext* ctx)
 {
@@ -831,12 +715,6 @@ antlrcpp::Any Visitor::visitExprOr(ifccParser::ExprOrContext* ctx)
     return 0;
 }
 
-
-
-/**
- * TO DO Fatih
-*/
-
 antlrcpp::Any Visitor::visitExprNot(ifccParser::ExprNotContext* ctx)
 {
     // Get value
@@ -845,12 +723,6 @@ antlrcpp::Any Visitor::visitExprNot(ifccParser::ExprNotContext* ctx)
 
     return 0;
 }
-
-
-
-/**
- * TO DO Fatih
-*/
 
 antlrcpp::Any Visitor::visitExprCmp(ifccParser::ExprCmpContext* ctx)
 {
@@ -918,12 +790,6 @@ antlrcpp::Any Visitor::visitExprCmp(ifccParser::ExprCmpContext* ctx)
     return 0;
 }
 
-
-
-/**
- * TO DO Fatih
-*/
-
 void Visitor::reduce_and()
 {
     // Getting current CFG
@@ -955,13 +821,13 @@ void Visitor::reduce_and()
     // Conditions
     auto droite_bb = new BasicBlock(graph);
     graph->add_block(droite_bb);
-    droite_bb->test_symbol = droite;
+    droite_bb->set_test(droite);
     droite_bb->exit_true = true_bb;
     droite_bb->exit_false = false_bb;
 
     auto gauche_bb = new BasicBlock(graph);
     graph->add_block(gauche_bb);
-    gauche_bb->test_symbol = gauche;
+    gauche_bb->set_test(gauche);
     gauche_bb->exit_true = droite_bb;
     gauche_bb->exit_false = false_bb;
 
@@ -971,12 +837,6 @@ void Visitor::reduce_and()
     block->exit_true = gauche_bb;
     graph->current_bb = out_bb;
 }
-
-
-
-/**
- * TO DO Fatih
-*/
 
 void Visitor::reduce_or()
 {
@@ -1009,13 +869,13 @@ void Visitor::reduce_or()
     // Conditions
     auto droite_bb = new BasicBlock(graph);
     graph->add_block(droite_bb);
-    droite_bb->test_symbol = droite;
+    droite_bb->set_test(droite);
     droite_bb->exit_true = true_bb;
     droite_bb->exit_false = false_bb;
 
     auto gauche_bb = new BasicBlock(graph);
     graph->add_block(gauche_bb);
-    gauche_bb->test_symbol = gauche;
+    gauche_bb->set_test(gauche);
     gauche_bb->exit_true = true_bb;
     gauche_bb->exit_false = droite_bb;
 
@@ -1025,12 +885,6 @@ void Visitor::reduce_or()
     block->exit_true = gauche_bb;
     graph->current_bb = out_bb;
 }
-
-
-
-/**
- * TO DO Fatih
-*/
 
 void Visitor::reduce_not()
 {
@@ -1062,7 +916,7 @@ void Visitor::reduce_not()
     // Condition
     auto not_bb = new BasicBlock(graph);
     graph->add_block(not_bb);
-    not_bb->test_symbol = value;
+    not_bb->set_test(value);
     not_bb->exit_true = false_bb;
     not_bb->exit_false = true_bb;
 
@@ -1073,12 +927,6 @@ void Visitor::reduce_not()
     graph->current_bb = out_bb;
 }
 
-
-
-/**
- * TO DO Fatih
-*/
-
 const Symbol& Visitor::pop_symbol()
 {
     auto*       graph = graphs.back();
@@ -1087,12 +935,6 @@ const Symbol& Visitor::pop_symbol()
     return value;
 }
 
-
-
-/**
- * TO DO Fatih
-*/
-
 void Visitor::open_scope()
 {
     auto* scope = new Scope(current_scope);
@@ -1100,23 +942,16 @@ void Visitor::open_scope()
     current_scope = scope;
 }
 
-
-
-/**
- * TO DO Fatih
-*/
-
 void Visitor::close_scope()
 {
     current_scope = current_scope->get_parent();
 }
 
-
-
 /**
- * TO DO Fatih
-*/
-
+ * Reduit une constante litérale en un entier
+ * @param ctx : la constante à réduire
+ * @return le symbole correspondant à la constante
+ */
 Symbol Visitor::reduce_constant(ifccParser::ConstantContext* ctx)
 {
     if(ctx->NUMERIC())

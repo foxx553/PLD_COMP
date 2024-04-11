@@ -2,12 +2,10 @@
 
 #include "Backend.hpp"
 
-
 /**
  * Class BackendASM pour le reciblage vers x86
  * Hérite de la Class Backend
  */
-
 class BackendASM : public Backend
 {
 public:
